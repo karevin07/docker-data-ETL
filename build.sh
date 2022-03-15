@@ -1,22 +1,15 @@
 #!/bin/bash
 
-set -e
+NAME=$1
+IMAGE_NAME="data-etl"
+DOCKER_FILE_DIR="docker"
+TAG=data-etl-${NAME}
 
-TAG=3.1.1-hadoop3.2
+echo ${TAG}
 
 build() {
-    NAME=$1
-    IMAGE=bde2020/spark-$NAME:$TAG
-    cd $([ -z "$2" ] && echo "./$NAME" || echo "$2")
-    echo '--------------------------' building $IMAGE in $(pwd)
-    docker build -t $IMAGE .
-    cd -
+    docker build -t ${TAG} -f ${DOCKER_FILE_DIR}/docker-${NAME}/Dockerfile .
+    echo "docker build -t ${TAG} -f ${DOCKER_FILE_DIR}/docker-${NAME}/Dockerfile ."
 }
 
-build base
-build master
-build worker
-build submit
-build java-template template/java
-build scala-template template/scala
-build python-template template/python
+build ${NAME}

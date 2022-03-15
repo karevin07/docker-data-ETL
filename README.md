@@ -1,29 +1,18 @@
-# README #
+# docker-data-etl
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This project is a data etl flow with airflow and spark:
 
-### What is this repository for? ###
+A simple data etl flow extract news by web crawler, use jieba to cut the words, load the data to postgres
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* build image
+`bash build.sh`
 
-### How do I get set up? ###
+* get started with docker compose
+`docker-compose up -d`
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
 
-### Contribution guidelines ###
 
-* Writing tests
-* Code review
-* Other guidelines
+## Note
+  
+  This project is modified from https://github.com/pappas999/chainlink-hardhat-box
 
-### Who do I talk to? ###
-
-* Repo owner or admin
-* Other community or team contact
