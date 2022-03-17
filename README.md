@@ -45,6 +45,7 @@ flowchart
     notebook -..-> spark-cluster
     airflow--> spark-cluster
     
+```
 
 * build image
 `bash build.sh {image_name}`
