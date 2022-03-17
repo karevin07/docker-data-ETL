@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # Local path & Remote path.
-SRC_FOLDER = '/usr/local/spark/resources'
+SRC_FOLDER = '/usr/local/airflow'
 
 
 # ETL Flow

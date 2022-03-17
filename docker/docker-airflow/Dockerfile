@@ -12,7 +12,7 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
 # Airflow
-ARG AIRFLOW_VERSION=1.10.9
+ARG AIRFLOW_VERSION=1.10.12
 ARG AIRFLOW_USER_HOME=/usr/local/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
@@ -27,6 +27,9 @@ ENV LC_MESSAGES en_US.UTF-8
 
 # Disable noisy "Handling signal" log messages:
 # ENV GUNICORN_CMD_ARGS --log-level WARNING
+
+COPY docker/docker-airflow/requirements.txt /requirements.txt
+
 
 RUN set -ex \
     && buildDeps=' \
@@ -76,10 +79,10 @@ RUN set -ex \
 
 RUN pip install markupsafe==2.0.1
 RUN pip install "wtforms<=2.3.3"
+RUN pip install -r requirements.txt
 
 COPY docker/docker-airflow/script/entrypoint.sh /entrypoint.sh
 COPY docker/docker-airflow/config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
-COPY docker/docker-airflow/requirements.txt /requirements.txt
 
 RUN chown -R airflow: ${AIRFLOW_USER_HOME}
 RUN chmod +x /entrypoint.sh

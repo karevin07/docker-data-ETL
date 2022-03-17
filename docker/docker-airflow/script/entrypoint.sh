@@ -2,7 +2,7 @@
 
 # User-provided configuration must always be respected.
 #
-# Therefore, this script must only derives Airflow AIRFLOW__ variables from other variables
+# Therefore, this pg-init-scripts must only derives Airflow AIRFLOW__ variables from other variables
 # when the user did not provide their own configuration.
 
 TRY_LOOP="20"
