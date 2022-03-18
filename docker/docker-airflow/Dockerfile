@@ -28,7 +28,7 @@ ENV LC_MESSAGES en_US.UTF-8
 # Disable noisy "Handling signal" log messages:
 # ENV GUNICORN_CMD_ARGS --log-level WARNING
 
-COPY docker/docker-spark-base/requirements.txt /requirements.txt
+COPY docker/docker-base/requirements.txt /requirements.txt
 
 
 RUN set -ex \

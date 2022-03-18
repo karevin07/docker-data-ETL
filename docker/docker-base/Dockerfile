@@ -15,5 +15,8 @@ RUN curl https://downloads.lightbend.com/scala/${scala_version}/scala-${scala_ve
 ENV SCALA_HOME="/usr/bin/scala"
 ENV PATH=${PATH}:${SCALA_HOME}/bin
 
+ADD docker/docker-base/requirements.txt .
+RUN pip install -r requirements.txt
+
 WORKDIR ${shared_workspace}
 CMD ["bash"]

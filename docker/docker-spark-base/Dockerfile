@@ -19,8 +19,5 @@ ENV SPARK_MASTER_HOST spark
 ENV SPARK_MASTER_PORT 7077
 ENV PYSPARK_PYTHON python3
 
-ADD docker/docker-spark-base/requirements.txt .
-RUN pip install -r requirements.txt
-
 
 WORKDIR ${SPARK_HOME}
