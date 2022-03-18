@@ -1,1 +1,0 @@
-SPARK_MASTER_OPTS="-Dspark.testing.memory=2147480000 -Dspark.deploy.defaultCores=1"

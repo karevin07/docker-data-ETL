@@ -1,4 +1,4 @@
-FROM karevin07/data-etl-base
+FROM data-etl-base:latest
 
 ADD notebooks ./
 
@@ -27,5 +27,9 @@ RUN apt-get install -y ca-certificates-java --no-install-recommends && \
 
 EXPOSE 8888
 
-WORKDIR ${SHARED_WORKSPACE}
+WORKDIR ${WORKSPACE}
+
+ADD docker/docker-spark-base/requirements.txt .
+RUN pip install -r requirements.txt
+
 CMD jupyter lab --ip=0.0.0.0 --port=8888 --no-browser --allow-root --NotebookApp.token=

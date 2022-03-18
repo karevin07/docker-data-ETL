@@ -5,8 +5,8 @@ ARG shared_workspace=/home/workspace
 
 RUN mkdir -p ${shared_workspace} && \
     apt-get update -y && \
-    apt-get install -y curl python3 r-base && \
-    ln -s /usr/bin/python3 /usr/bin/python \
+    apt-get install -y curl python3 r-base python3-pip && \
+    ln -s /usr/bin/python3 /usr/bin/python
 
 RUN curl https://downloads.lightbend.com/scala/${scala_version}/scala-${scala_version}.deb -k -o scala.deb && \
     apt install -y ./scala.deb && \

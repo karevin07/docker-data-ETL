@@ -48,5 +48,7 @@ Thumbs.db
 *.mov
 *.wmv
 
-
 .metals
+/spark/data-etl/
+
+!/spark/data-etl/target/scala-2.12/data-etl-0.0.1.jar

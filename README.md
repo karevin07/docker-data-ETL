@@ -47,15 +47,31 @@ flowchart
     
 ```
 
-* build image
+### build image
+
+- use `build.sh`
+
 `bash build.sh {image_name}`
 
+- `Makefile`
+
+``make build-all``
+
 * get started with docker compose
-`docker-compose up -d`
+
+```docker-compose up -d```
 
 
+### Service
 
-## Note
-  
-  This project is modified from https://github.com/pappas999/chainlink-hardhat-box
+- [airflow](http://0.0.0.0:/8282)
+- [spark](http://0.0.0.0:8080)
+- [jupyterlab](http://0.0.0.0:8888)
 
+## Reference
+
+https://github.com/puckel/docker-airflow
+
+https://github.com/cluster-apps-on-docker/spark-standalone-cluster-on-docker
+
+https://hub.docker.com/r/bitnami/spark
