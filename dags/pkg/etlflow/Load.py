@@ -8,14 +8,13 @@ from airflow.operators.dummy_operator import DummyOperator
 
 from datetime import datetime, timedelta
 
+from airflow.operators.postgres_operator import PostgresOperator
+
 
 def get_load_task(parent_dag_name, settings):
-    # Create spark session
-
     ###############################################
     # Parameters
     ###############################################
-    spark_master = "spark://spark:7077"
 
     spark_extra_path = os.path.join(settings.SRC_FOLDER, settings.SPARK_EXTRA_PATH)
 
@@ -23,7 +22,9 @@ def get_load_task(parent_dag_name, settings):
                                     settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
     word_input_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
                                    settings.TRANSFORMATION_OUTPUT_WORD_FILE)
+
     postgres_db = settings.POSTGRES_DB
+    postgres_jdbc = settings.POSTGRES_JDBC_URL
     postgres_user = settings.POSTGRES_USER
     postgres_pwd = settings.POSTGRES_PASSWORD
 
@@ -54,73 +55,79 @@ def get_load_task(parent_dag_name, settings):
         schedule_interval=timedelta(1)
     )
 
-    start = DummyOperator(task_id="start", dag=dag)
+    start_create_table_task = DummyOperator(task_id="start_create_table", dag=dag)
+    start_load_data_task = DummyOperator(task_id="start_load_data", dag=dag)
 
-    spark_job_word_load_postgres = BashOperator(
+    postgres_create_title_table = PostgresOperator(
         dag=dag,
-        task_id='clean_data',
-        bash_command='spark-submit'
-                     f' --master {spark_master}'
-                     f' --name data-load'
-                     f' /usr/local/spark/app/load.py'
-                     f' {word_input_path}'
-                     f' {word_table_name}'
-                     f' {postgres_db}'
-                     f' {postgres_user}'
-                     f' {postgres_pwd}'
-        ,
+        task_id="create_title_table",
+        database=postgres_db,
+        postgres_conn_id="postgres_default",
+        sql="""
+            CREATE TABLE IF NOT EXISTS title (
+            link_id INT NOT NULL,
+            title VARCHAR NOT NULL);
+          """,
+
     )
 
-    spark_job_title_load_postgres = BashOperator(
+    postgres_create_content_table = PostgresOperator(
         dag=dag,
-        task_id='spark-data-load',
-        bash_command='spark-submit'
-                     f' --master {spark_master}'
-                     f' --name data-load'
-                     f' /usr/local/spark/app/load.py'
-                     f' {title_input_path}'
-                     f' {title_table_name}'
-                     f' {postgres_db}'
-                     f' {postgres_user}'
-                     f' {postgres_pwd}'
-        ,
+        task_id="create_content_table",
+        database=postgres_db,
+        postgres_conn_id="postgres_default",
+        sql="""
+            CREATE TABLE IF NOT EXISTS content (
+            word VARCHAR NOT NULL,
+            index INT NOT NULL,
+            count INT NOT NULL);
+          """,
     )
 
-    # spark_job_word_load_postgres = SparkSubmitOperator(
-    #     task_id="spark-load-word-data",
-    #     application="/usr/local/spark/app/load.py",  # Spark application path created in airflow and spark cluster
-    #     name="load-data",
-    #     conn_id="spark_default",
-    #     verbose=1,
-    #     conf={"spark.master": spark_master},
-    #     application_args=[word_input_path, word_table_name, postgres_db, postgres_user, postgres_pwd],
-    #     jars=spark_extra_path,
-    #     driver_class_path=spark_extra_path,
-    #     dag=dag
-    # )
-    #
-    # spark_job_title_load_postgres = SparkSubmitOperator(
-    #     task_id="spark-load-word-data",
-    #     application="/usr/local/spark/app/load.py",  # Spark application path created in airflow and spark cluster
-    #     name="load-data",
-    #     conn_id="spark_default",
-    #     verbose=1,
-    #     conf={"spark.master": spark_master},
-    #     application_args=[title_input_path, title_table_name, postgres_db, postgres_user, postgres_pwd],
-    #     jars=spark_extra_path,
-    #     driver_class_path=spark_extra_path,
-    #     dag=dag
-    # )
+    spark_job_word_load_postgres = SparkSubmitOperator(
+        task_id="spark-load-content-data",
+        application="/home/workspace/app/load.py",
+        name="load-data",
+        conn_id="spark_default",
+        verbose=True,
+        application_args=[word_input_path, word_table_name, postgres_jdbc, postgres_user, postgres_pwd],
+        jars=spark_extra_path,
+        driver_class_path=spark_extra_path,
+        executor_memory="1g",
+        dag=dag
+    )
 
-    tasks = [
+    spark_job_title_load_postgres = SparkSubmitOperator(
+        task_id="spark-load-title-data",
+        application="/home/workspace/app/load.py",
+        name="load-data",
+        conn_id="spark_default",
+        verbose=True,
+        application_args=[title_input_path, title_table_name, postgres_jdbc, postgres_user, postgres_pwd],
+        jars=spark_extra_path,
+        driver_class_path=spark_extra_path,
+        executor_memory="1g",
+        dag=dag
+    )
+
+    create_table_tasks = [
+        postgres_create_title_table,
+        postgres_create_content_table
+    ]
+
+    load_tasks = [
         spark_job_word_load_postgres,
         spark_job_title_load_postgres
     ]
 
     end = DummyOperator(task_id="end", dag=dag)
 
-    for t in tasks:
-        start >> t
-        t >> end
+    for table_task in create_table_tasks:
+        start_create_table_task >> table_task
+        table_task >> start_load_data_task
+
+    for load_task in load_tasks:
+        start_load_data_task >> load_task
+        load_task >> end
 
     return dag
