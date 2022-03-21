@@ -1,8 +1,10 @@
 from airflow import DAG
 from datetime import datetime
 from airflow.operators.bash_operator import BashOperator
+from airflow.operators.subdag_operator import SubDagOperator
 
 from pkg.settings import setting as settings
+from pkg.etlflow.Clean import get_clear_all_data_dag
 import os
 
 
@@ -10,7 +12,7 @@ default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
     'start_date': datetime(2000, 1, 1),
-    'email': ['kelvin@ghtinc.com'],
+    'email': ['airflow@airflow.com'],
     'email_on_failure': False,
     'retries': 0,
     'run_as_user': 'airflow'
@@ -24,10 +26,11 @@ dag = DAG(
     catchup=False,
 )
 
-clean_dag = BashOperator(
+
+clear_all_data_subdag = SubDagOperator(
     dag=dag,
-    task_id='clean_data',
-    bash_command=f'rm -r -f {os.path.join(settings.SRC_FOLDER, "data")}',
+    task_id='clear_all_data',
+    subdag=get_clear_all_data_dag(dag_id, settings),
 )
 
-clean_dag
+clear_all_data_subdag
