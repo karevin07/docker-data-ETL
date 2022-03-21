@@ -12,14 +12,15 @@ TRANSFORMATION_OUTPUT = 'data/output'
 TRANSFORMATION_OUTPUT_TITLE_FILE = 'output_title.csv'
 TRANSFORMATION_OUTPUT_WORD_FILE = 'output_content.csv'
 
-SPARK_EXTRA_PATH = 'jars/postgresql-9.4.1207.jar'
+SPARK_EXTRA_PATH = 'jars/postgresql-42.3.3.jar'
 
 # Postgres
-POSTGRES_DB = "jdbc:postgresql://postgres/test"
+POSTGRES_DB = "test"
+POSTGRES_JDBC_URL = f"jdbc:postgresql://postgres:5432/{POSTGRES_DB}"
 POSTGRES_USER = "test"
 POSTGRES_PASSWORD = "postgres"
 
-WORD_TABLE = "word"
+WORD_TABLE = "content"
 TITLE_TABLE = "title"
 
 
