@@ -70,8 +70,11 @@ flowchart
 
 ## Reference
 
-https://github.com/puckel/docker-airflow
+https://medium.com/data-arena/building-a-spark-and-airflow-development-environment-with-docker-f0b9b625edd8
 
 https://github.com/cluster-apps-on-docker/spark-standalone-cluster-on-docker
 
 https://hub.docker.com/r/bitnami/spark
+
+https://github.com/puckel/docker-airflow
+
