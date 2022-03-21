@@ -36,7 +36,7 @@ def get_content(link):
     resp = requests.get(link)
     soup = BeautifulSoup(resp.text, "html.parser")
     link_id = link.split("/")[-1]
-    title = soup.select_one("title").text.strip(" - The News Lens 關鍵評論網")
+    title = soup.select_one("title").text.strip(" - The News Lens 關鍵評論網").strip(" - 第 1 頁")
     content = "".join([i.text.strip() for i in soup.select_one("div.article-body-container").findAll("p")])
     news = {
         "link_id": link_id,

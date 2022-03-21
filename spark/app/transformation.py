@@ -3,13 +3,10 @@ import re
 import sys
 import json
 
-
-import pandas
+import pandas as pd
 import jieba
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
-
-
 
 input_file = sys.argv[1]
 output_path = sys.argv[2]

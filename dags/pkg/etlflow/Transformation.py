@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from airflow import DAG
 # from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
+from airflow.contrib.operators.ssh_operator import SSHOperator
 from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 
@@ -12,14 +13,14 @@ def get_transformation_get_task(parent_dag_name, settings):
     ###############################################
     # Parameters
     ###############################################
-    spark_master = "spark://spark:7077"
     input_path = os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_INPUT)
-    input_file = settings.TRANSFORMATION_INPUT_FILE
+    input_file = os.path.join(input_path, settings.TRANSFORMATION_INPUT_FILE)
     output_path = os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT)
     spark_extra_path = os.path.join(settings.SRC_FOLDER, settings.SPARK_EXTRA_PATH)
-    output_word_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT), settings.TRANSFORMATION_OUTPUT_WORD_FILE)
-    output_title_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT), settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
-
+    output_word_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
+                                    settings.TRANSFORMATION_OUTPUT_WORD_FILE)
+    output_title_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
+                                     settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
 
     ###############################################
     # DAG Definition
@@ -47,29 +48,14 @@ def get_transformation_get_task(parent_dag_name, settings):
 
     start = DummyOperator(task_id="start", dag=dag)
 
-    # spark_job = BashOperator(
-    #     dag=dag,
-    #     task_id='spark-transformation',
-    #     bash_command='spark-submit'
-    #                  f' --master {spark_master}'
-    #                  f' --name data-transformation'
-    #                  f' /home/workspace/app/transformation.py'
-    #                  f' {input_path}'
-    #                  f' {input_file}'
-    #                  f' {output_path}'
-    #                  f' {output_word_path}'
-    #                  f' {output_title_path}'
-    #     ,
-    # )
-
     spark_job = SparkSubmitOperator(
         task_id="spark_job",
         application="/home/workspace/app/transformation.py",
         name="data-transformation",
-        conn_id="spark_standalone",
-        verbose=1,
+        conn_id="spark_default",
+        spark_binary='/usr/local/spark/bin/spark-submit',
         application_args=[input_file,
-                          output_path,
+                          output_path
                           ],
         dag=dag)
 
