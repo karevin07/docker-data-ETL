@@ -1,14 +1,26 @@
-FROM openjdk:8-jre-slim
+ARG PYTHON_VERSION=3.7
+FROM python:${PYTHON_VERSION}-stretch
 
-ARG scala_version=2.12.10
-ARG shared_workspace=/home/workspace
+ARG SCALA_VERSION=2.12.10
+ARG WORKSPACE=/home/workspace
 
-RUN mkdir -p ${shared_workspace} && \
-    apt-get update -y && \
-    apt-get install -y curl python3 r-base python3-pip && \
-    ln -s /usr/bin/python3 /usr/bin/python
+RUN mkdir -p ${WORKSPACE}
 
-RUN curl https://downloads.lightbend.com/scala/${scala_version}/scala-${scala_version}.deb -k -o scala.deb && \
+RUN apt-get update && \
+    apt-get install -y software-properties-common && \
+    apt-get install -y gnupg2 && \
+    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB9B1D8886F44E2A && \
+    add-apt-repository "deb http://security.debian.org/debian-security stretch/updates main" && \
+    apt-get update && \
+    apt-get install -y openjdk-8-jdk && \
+    pip freeze && \
+    java -version $$ \
+    javac -version
+
+ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
+RUN export JAVA_HOME
+
+RUN curl https://downloads.lightbend.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.deb -k -o scala.deb && \
     apt install -y ./scala.deb && \
     rm -rf scala.deb
 
@@ -18,5 +30,5 @@ ENV PATH=${PATH}:${SCALA_HOME}/bin
 ADD docker/docker-base/requirements.txt .
 RUN pip install -r requirements.txt
 
-WORKDIR ${shared_workspace}
+WORKDIR ${WORKSPACE}
 CMD ["bash"]
