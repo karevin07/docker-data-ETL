@@ -1,13 +1,5 @@
-# VERSION 1.10.9
-# AUTHOR: Matthieu "Puckel_" Roisil
-# DESCRIPTION: Basic Airflow container
-# BUILD: docker build --rm -t puckel/docker-airflow .
-# SOURCE: https://github.com/puckel/docker-airflow
+FROM data-etl-base:latest
 
-FROM python:3.7-slim-buster
-LABEL maintainer="Puckel_"
-
-# Never prompt the user for choices on installation/configuration of packages
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM linux
 
@@ -27,9 +19,6 @@ ENV LC_MESSAGES en_US.UTF-8
 
 # Disable noisy "Handling signal" log messages:
 # ENV GUNICORN_CMD_ARGS --log-level WARNING
-
-COPY docker/docker-base/requirements.txt /requirements.txt
-
 
 RUN set -ex \
     && buildDeps=' \
@@ -62,7 +51,9 @@ RUN set -ex \
     && pip install pyOpenSSL \
     && pip install ndg-httpsclient \
     && pip install pyasn1 \
-    && pip install markupsafe \
+    && pip install "markupsafe==2.0.1" \
+    && pip install "wtforms<=2.3.3" \
+    && pip install jpype1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.2' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
@@ -77,9 +68,25 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-RUN pip install markupsafe==2.0.1
-RUN pip install "wtforms<=2.3.3"
-RUN pip install -r requirements.txt
+ENV SPARK_HOME /usr/local/spark
+ARG SPARK_VERSION=3.2.1
+ARG HADOOP_VERSION=3.2
+
+
+RUN cd "/tmp" && \
+        curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -o spark.tgz && \
+        tar -xvzf spark.tgz && \
+        mkdir -p "${SPARK_HOME}/bin" && \
+        mkdir -p "${SPARK_HOME}/assembly/target/scala-2.12/jars"
+
+RUN cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/bin/* "${SPARK_HOME}/bin/" && \
+    cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/jars/* "${SPARK_HOME}/assembly/target/scala-2.12/jars/" && \
+    rm -r -f /tmp/spark.tgz && \
+    rm -r -f ${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}
+
+
+RUN export SPARK_HOME
+ENV PATH $PATH:/usr/local/spark/bin
 
 COPY docker/docker-airflow/script/entrypoint.sh /entrypoint.sh
 COPY docker/docker-airflow/config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg

@@ -4,22 +4,25 @@ ADD notebooks ./
 
 # -- Layer: JupyterLab + Python kernel for PySpark
 
-ARG jupyterlab_version=3.0.0
-ARG scala_kernel_version=0.9.0
+ARG JUPYTERLAB_VERSION=3.0.0
+ARG SCALA_KERNEL_VERSION=0.9.0
 
 RUN apt-get update -y && \
-    apt-get install -y python3-pip python3-dev && \
-    pip3 install --upgrade pip && \
-    pip3 install wget==3.2 jupyterlab==${jupyterlab_version}
+    pip install --upgrade pip && \
+    pip install wget==3.2 jupyterlab==${JUPYTERLAB_VERSION}
+
+
+RUN pip install matplotlib==3.5.1 && \
+    pip install psycopg2==2.9.3
 
 # -- Layer: Scala kernel for Spark
 
-ARG scala_version=2.12.10
+ARG SCALA_VERSION=2.12.10
 
 RUN apt-get install -y ca-certificates-java --no-install-recommends && \
     curl -Lo coursier https://git.io/coursier-cli && \
     chmod +x coursier && \
-    ./coursier launch --fork almond:${scala_kernel_version} --scala ${scala_version} -- --display-name "Scala ${scala_version}" --install && \
+    ./coursier launch --fork almond:${SCALA_KERNEL_VERSION} --scala ${SCALA_VERSION} -- --display-name "Scala ${SCALA_VERSION}" --install && \
     rm -f coursier
 
 # -- Runtime
