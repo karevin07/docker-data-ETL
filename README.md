@@ -8,9 +8,7 @@ A simple data etl flow extract news by web crawler, use jieba to cut the words, 
 ```mermaid
 flowchart
 
-    user
-    user
-    user
+    user("Data Enginner")
     
     master("master")
     worker1("worker1")
