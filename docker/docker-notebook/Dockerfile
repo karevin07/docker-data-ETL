@@ -1,7 +1,6 @@
 FROM data-etl-base:latest
 
-ADD notebooks ./
-
+ARG WORKSPACE=/home/worspace
 # -- Layer: JupyterLab + Python kernel for PySpark
 
 ARG JUPYTERLAB_VERSION=3.0.0

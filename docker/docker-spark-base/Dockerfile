@@ -3,6 +3,7 @@ FROM data-etl-base:latest
 ARG SPARK_VERSION=3.2.1
 ARG HADOOP_VERSION=3.2
 
+ARG WORKSPACE=/home/workkspace
 WORKDIR ${WORKSPACE}
 
 
