@@ -14,8 +14,6 @@ title_output = os.path.join(output_path, "output_title.csv")
 content_output = os.path.join(output_path, "output_content.csv")
 
 
-# Create spark session
-
 spark = (SparkSession
          .builder
          .getOrCreate()

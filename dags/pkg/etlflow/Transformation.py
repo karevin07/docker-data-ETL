@@ -2,17 +2,12 @@ import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
-# from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
-from airflow.contrib.operators.ssh_operator import SSHOperator
-from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy_operator import DummyOperator
 
 
 def get_transformation_get_task(parent_dag_name, settings):
-    ###############################################
-    # Parameters
-    ###############################################
+
     input_path = os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_INPUT)
     input_file = os.path.join(input_path, settings.TRANSFORMATION_INPUT_FILE)
     output_path = os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT)
@@ -22,9 +17,6 @@ def get_transformation_get_task(parent_dag_name, settings):
     output_title_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
                                      settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
 
-    ###############################################
-    # DAG Definition
-    ###############################################
     now = datetime.now()
 
     default_args = {
