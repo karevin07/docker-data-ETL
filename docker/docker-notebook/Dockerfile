@@ -1,6 +1,6 @@
 FROM data-etl-base:latest
 
-ARG WORKSPACE=/home/worspace
+ARG WORKSPACE=/home/workspace
 # -- Layer: JupyterLab + Python kernel for PySpark
 
 ARG JUPYTERLAB_VERSION=3.0.0
