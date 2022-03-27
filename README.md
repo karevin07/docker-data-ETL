@@ -2,13 +2,14 @@
 
 This project is a data etl flow with airflow and spark:
 
-A simple data etl flow extract news by web crawler, use jieba to cut the words, load the data to postgres
+A lightweight data etl flow extract news by web crawler, use jieba to cut the words, load the data to postgres
 
-- architecture
+### architecture
 ```mermaid
 flowchart
 
     user("Data Enginner")
+    
     
     master("master")
     worker1("worker1")
@@ -16,7 +17,7 @@ flowchart
     worker3("worler3")
     
     db[("Postgres")]
-    notebook("jupyerlab")
+    notebook("Jupyerlab")
     
     user
 
@@ -55,7 +56,8 @@ flowchart
 
 ``make build-all``
 
-* get started with docker compose
+
+* Get started with docker compose
 
 ```docker-compose up -d```
 
@@ -66,7 +68,31 @@ flowchart
 - [spark](http://0.0.0.0:8080)
 - [jupyterlab](http://0.0.0.0:8888)
 
+
+### Airflow connection
+
+- set spark connection
+
+![](https://i.imgur.com/0mVRf18.png)
+
+- postgres connection
+
+![](https://i.imgur.com/VyQf2dU.png)
+
+
+### ETL
+
+![](https://i.imgur.com/qRnngUg.png)
+
+- extract: web crawler
+- transformation: wordcount using spark
+- load: spark write data to postgres
+
+
+
+
 ## Reference
+
 
 https://medium.com/data-arena/building-a-spark-and-airflow-development-environment-with-docker-f0b9b625edd8
 
