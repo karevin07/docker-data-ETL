@@ -81,6 +81,21 @@ services:
             - ./spark/jars:/home/workspace/jars
             - ./spark/conf/spark-env.sh:/usr/bin/spark-3.2.1-bin-hadoop3.2/conf/spark-env.sh
 
+    spark-worker-3:
+        image: data-etl-spark-worker
+        depends_on:
+            - spark
+        environment:
+            - SPARK_MASTER_URL=spark://spark:7077
+            - SPARK_WORKER_MEMORY=1G
+            - SPARK_WORKER_CORES=1
+        ports:
+            - "8083:8081"
+        volumes:
+            - ./spark/app:/home/workspace/app
+            - ./spark/jars:/home/workspace/jars
+            - ./spark/conf/spark-env.sh:/usr/bin/spark-3.2.1-bin-hadoop3.2/conf/spark-env.sh
+
     jupyterlab:
         image: data-etl-notebook
         ports:
