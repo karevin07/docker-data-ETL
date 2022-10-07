@@ -4,7 +4,7 @@ DOCKER_FILE_DIR=docker
 ##@ Docker build images
 .PHONY: build-all build-base build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres
 
-build-all:| build-base  build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres
+build-all:| build-base  build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres ## build all
 
 build-base: ## build base image
 	@echo "docker build -t $(IMAGE_NAME)-base -f $(DOCKER_FILE_DIR)/docker-base/Dockerfile ."
