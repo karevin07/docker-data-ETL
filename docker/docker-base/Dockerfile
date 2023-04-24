@@ -13,7 +13,6 @@ RUN apt-get update && \
     add-apt-repository "deb http://security.debian.org/debian-security stretch/updates main" && \
     apt-get update && \
     apt-get install -y openjdk-8-jdk && \
-    pip freeze && \
     java -version $$ \
     javac -version
 
