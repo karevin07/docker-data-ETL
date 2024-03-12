@@ -1,34 +1,78 @@
-ARG PYTHON_VERSION=3.7
-FROM python:${PYTHON_VERSION}-stretch
+FROM ubuntu:22.04
 
-ARG SCALA_VERSION=2.12.10
 ARG WORKSPACE=/home/workspace
+ARG PYTHON_VERSION=3.9.17
+ENV SCALA_VERSION="2.12.10"
+ENV SCALA_HOME="${WORKSPACE}/scala"
 
-RUN mkdir -p ${WORKSPACE}
+# Setup python and java and base system
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG=en_US.UTF-8
 
 RUN apt-get update && \
-    apt-get install -y software-properties-common && \
-    apt-get install -y gnupg2 && \
-    apt-key adv --keyserver keyserver.ubuntu.com --recv-keys EB9B1D8886F44E2A && \
-    add-apt-repository "deb http://security.debian.org/debian-security stretch/updates main" && \
-    apt-get update && \
-    apt-get install -y openjdk-8-jdk && \
-    pip freeze && \
-    java -version $$ \
-    javac -version
+    apt-get upgrade -y && \
+    apt-get install -q -y openjdk-8-jdk \
+    libsnappy-dev \
+    language-pack-en \
+    supervisor \
+    libsqlite3-dev \
+    gcc \
+    make \
+    git \
+    wget \
+    zlib1g-dev \
+    libffi-dev \
+    openssl \
+    libssl-dev \
+    musl-dev \
+    bzip2 \
+    curl
 
-ENV JAVA_HOME="/usr/lib/jvm/java-8-openjdk-amd64"
-RUN export JAVA_HOME
 
-RUN curl https://downloads.lightbend.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.deb -k -o scala.deb && \
-    apt install -y ./scala.deb && \
-    rm -rf scala.deb
+# --- Set environment variables
+ENV HOME /app
+ENV PYENV_ROOT $HOME/.pyenv
+ENV PATH $PYENV_ROOT/shims:$PATH:$PYENV_ROOT/bin
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
 
-ENV SCALA_HOME="/usr/bin/scala"
+# ---- Install pyenv
+RUN curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
+    -o pyenv-installer && \
+    /bin/sh pyenv-installer && \
+    rm pyenv-installer
+
+# ---- Install Python
+RUN pyenv install $PYTHON_VERSION
+RUN pyenv global $PYTHON_VERSION
+RUN pyenv rehash
+
+# ---- Install Scala
+
+RUN cd "/tmp" && \
+    wget "https://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz" && \
+    tar xzf "scala-${SCALA_VERSION}.tgz" && \
+    mkdir -p "${SCALA_HOME}" && \
+    rm "/tmp/scala-${SCALA_VERSION}/bin/"*.bat && \
+    mv "/tmp/scala-${SCALA_VERSION}/bin" "/tmp/scala-${SCALA_VERSION}/lib" "${SCALA_HOME}" && \
+    ln -s "${SCALA_HOME}/bin/"* "/usr/bin/"
+
 ENV PATH=${PATH}:${SCALA_HOME}/bin
 
-ADD docker/docker-base/requirements.txt .
-RUN pip install -r requirements.txt
+# ---- Poetry install
 
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV PATH="$POETRY_HOME/bin:$PATH"
+RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
+RUN pip install --upgrade pip
+
+ENV PATH="/.venv/bin:$PATH"
+COPY pyproject.toml ./
+RUN poetry install --only main --no-root
+RUN rm -f ./pyproject.toml && rm -f ./poetry.lock
+
+# Change this to start your application
 WORKDIR ${WORKSPACE}
+
+
 CMD ["bash"]

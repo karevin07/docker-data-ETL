@@ -22,26 +22,26 @@ ENV LC_MESSAGES en_US.UTF-8
 
 RUN set -ex \
     && buildDeps=' \
-        freetds-dev \
-        libkrb5-dev \
-        libsasl2-dev \
-        libssl-dev \
-        libffi-dev \
-        libpq-dev \
-        git \
+    freetds-dev \
+    libkrb5-dev \
+    libsasl2-dev \
+    libssl-dev \
+    libffi-dev \
+    libpq-dev \
+    git \
     ' \
     && apt-get update -yqq \
     && apt-get upgrade -yqq \
     && apt-get install -yqq --no-install-recommends \
-        $buildDeps \
-        freetds-bin \
-        build-essential \
-        default-libmysqlclient-dev \
-        apt-utils \
-        curl \
-        rsync \
-        netcat \
-        locales \
+    $buildDeps \
+    freetds-bin \
+    build-essential \
+    default-libmysqlclient-dev \
+    apt-utils \
+    curl \
+    rsync \
+    netcat \
+    locales \
     && sed -i 's/^# en_US.UTF-8 UTF-8$/en_US.UTF-8 UTF-8/g' /etc/locale.gen \
     && locale-gen \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
@@ -53,20 +53,20 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install "markupsafe==2.0.1" \
     && pip install "wtforms<=2.3.3" \
-    && pip install jpype1 \
-    && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
+    # && pip install jpype1 \
+    && pip install apache-airflow[crypto,celery,postgres,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.2' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
     && apt-get clean \
     && rm -rf \
-        /var/lib/apt/lists/* \
-        /tmp/* \
-        /var/tmp/* \
-        /usr/share/man \
-        /usr/share/doc \
-        /usr/share/doc-base
+    /var/lib/apt/lists/* \
+    /tmp/* \
+    /var/tmp/* \
+    /usr/share/man \
+    /usr/share/doc \
+    /usr/share/doc-base
 
 ENV SPARK_HOME /usr/local/spark
 ARG SPARK_VERSION=3.2.1
@@ -74,10 +74,10 @@ ARG HADOOP_VERSION=3.2
 
 
 RUN cd "/tmp" && \
-        curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -o spark.tgz && \
-        tar -xvzf spark.tgz && \
-        mkdir -p "${SPARK_HOME}/bin" && \
-        mkdir -p "${SPARK_HOME}/assembly/target/scala-2.12/jars"
+    curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -o spark.tgz && \
+    tar -xvzf spark.tgz && \
+    mkdir -p "${SPARK_HOME}/bin" && \
+    mkdir -p "${SPARK_HOME}/assembly/target/scala-2.12/jars"
 
 RUN cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/bin/* "${SPARK_HOME}/bin/" && \
     cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/jars/* "${SPARK_HOME}/assembly/target/scala-2.12/jars/" && \
