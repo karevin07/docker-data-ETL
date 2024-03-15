@@ -72,8 +72,6 @@ COPY pyproject.toml ./
 RUN poetry install --only main --no-root
 RUN rm -f ./pyproject.toml && rm -f ./poetry.lock
 
-# Change this to start your application
 WORKDIR ${WORKSPACE}
-
 
 CMD ["bash"]
