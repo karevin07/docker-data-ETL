@@ -15,9 +15,9 @@ content_output = os.path.join(output_path, "output_content.csv")
 
 
 spark = (SparkSession
-         .builder
-         .getOrCreate()
-         )
+            .builder
+            .getOrCreate()
+            )
 
 sc = spark.sparkContext
 
@@ -48,9 +48,8 @@ def text_cleaning(paragraph):
 
 def main():
     f = open(input_file)
-    data = json.load(f)
-    newJson = str(data)
-    df = spark.read.json(sc.parallelize([newJson]))
+    data_list = json.load(f)
+    df = spark.createDataFrame(data_list)
     df_title = df.select(
         col("link_id"),
         col("title")

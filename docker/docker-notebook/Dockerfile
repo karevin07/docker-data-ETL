@@ -7,12 +7,15 @@ ARG JUPYTERLAB_VERSION=3.0.0
 ARG SCALA_KERNEL_VERSION=0.9.0
 
 RUN apt-get update -y && \
-    pip install --upgrade pip && \
-    pip install wget==3.2 jupyterlab==${JUPYTERLAB_VERSION}
-
+    apt-get upgrade -y && \
+    apt install sqlite3 && \
+    pip install --upgrade pip
 
 RUN pip install matplotlib==3.5.1 && \
-    pip install psycopg2==2.9.3
+    pip install psycopg2-binary==2.9.3
+
+RUN pip install pysqlite3
+RUN pip install wget==3.2 jupyterlab==${JUPYTERLAB_VERSION}
 
 # -- Layer: Scala kernel for Spark
 

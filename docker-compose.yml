@@ -29,7 +29,7 @@ services:
             - ./spark/jars:/home/workspace/jars
             - ./data:/home/workspace/data
         ports:
-            - "8282:8282"
+            - "8282:8080"
         command: webserver
         healthcheck:
             test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
@@ -37,7 +37,7 @@ services:
             timeout: 30s
             retries: 3
             
-    # Spark with 2 workers
+    # Spark with 3 workers
     spark:
         image: data-etl-spark-master
         user: root
