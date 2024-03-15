@@ -15,7 +15,7 @@ def get_transformation_get_task(parent_dag_name, settings):
     output_word_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
                                     settings.TRANSFORMATION_OUTPUT_WORD_FILE)
     output_title_path = os.path.join(os.path.join(settings.SRC_FOLDER, settings.TRANSFORMATION_OUTPUT),
-                                     settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
+                                    settings.TRANSFORMATION_OUTPUT_TITLE_FILE)
 
     now = datetime.now()
 
@@ -47,8 +47,8 @@ def get_transformation_get_task(parent_dag_name, settings):
         conn_id="spark_default",
         spark_binary='/usr/local/spark/bin/spark-submit',
         application_args=[input_file,
-                          output_path
-                          ],
+                        output_path
+                        ],
         dag=dag)
 
     end = DummyOperator(task_id="end", dag=dag)

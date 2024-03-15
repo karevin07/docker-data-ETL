@@ -24,6 +24,7 @@ RUN apt-get update && \
     libffi-dev \
     openssl \
     libssl-dev \
+    libbz2-dev \
     musl-dev \
     bzip2 \
     curl
