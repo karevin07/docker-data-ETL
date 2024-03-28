@@ -1,5 +1,6 @@
 IMAGE_NAME=data-etl
 DOCKER_FILE_DIR=docker
+DOCKER_FILE_NAME=Dockerfile.new
 
 ##@ Docker build images
 .PHONY: build-all build-base build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres
@@ -7,32 +8,32 @@ DOCKER_FILE_DIR=docker
 build-all:| build-base  build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres ## build all
 
 build-base: ## build base image
-	@echo "docker build -t $(IMAGE_NAME)-base -f $(DOCKER_FILE_DIR)/docker-base/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-base -f $(DOCKER_FILE_DIR)/docker-base/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-base -f $(DOCKER_FILE_DIR)/docker-base/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-base -f $(DOCKER_FILE_DIR)/docker-base/$(DOCKER_FILE_NAME) .
 
 build-spark-base: ## build spark base image
-	@echo "docker build -t $(IMAGE_NAME)-spark-base -f $(DOCKER_FILE_DIR)/docker-spark-base/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-spark-base -f $(DOCKER_FILE_DIR)/docker-spark-base/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-spark-base -f $(DOCKER_FILE_DIR)/docker-spark-base/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-spark-base -f $(DOCKER_FILE_DIR)/docker-spark-base/$(DOCKER_FILE_NAME) .
 
 build-spark-master: ## build spark master image
-	@echo "docker build -t $(IMAGE_NAME)-spark-master -f $(DOCKER_FILE_DIR)/docker-spark-master/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-spark-master -f $(DOCKER_FILE_DIR)/docker-spark-master/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-spark-master -f $(DOCKER_FILE_DIR)/docker-spark-master/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-spark-master -f $(DOCKER_FILE_DIR)/docker-spark-master/$(DOCKER_FILE_NAME) .
 
 build-spark-worker: ## build spark worker image
-	@echo "docker build -t $(IMAGE_NAME)-spark-worker -f $(DOCKER_FILE_DIR)/docker-spark-worker/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-spark-worker -f $(DOCKER_FILE_DIR)/docker-spark-worker/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-spark-worker -f $(DOCKER_FILE_DIR)/docker-spark-worker/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-spark-worker -f $(DOCKER_FILE_DIR)/docker-spark-worker/$(DOCKER_FILE_NAME) .
 
 build-airflow: ## build airflow image
-	@echo "docker build -t $(IMAGE_NAME)-airflow -f $(DOCKER_FILE_DIR)/docker-airflow/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-airflow -f $(DOCKER_FILE_DIR)/docker-airflow/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-airflow -f $(DOCKER_FILE_DIR)/docker-airflow/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-airflow -f $(DOCKER_FILE_DIR)/docker-airflow/$(DOCKER_FILE_NAME) .
 
 build-notebook: ## build notebook image
-	@echo "docker build -t $(IMAGE_NAME)-notebook -f $(DOCKER_FILE_DIR)/docker-notebook/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-notebook -f $(DOCKER_FILE_DIR)/docker-notebook/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-notebook -f $(DOCKER_FILE_DIR)/docker-notebook/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-notebook -f $(DOCKER_FILE_DIR)/docker-notebook/$(DOCKER_FILE_NAME) .
 
 build-postgres: ## build postgres image
-	@echo "docker build -t $(IMAGE_NAME)-postgres -f $(DOCKER_FILE_DIR)/docker-postgres/Dockerfile ."
-	@docker build -t $(IMAGE_NAME)-postgres -f $(DOCKER_FILE_DIR)/docker-postgres/Dockerfile .
+	@echo "docker build -t $(IMAGE_NAME)-postgres -f $(DOCKER_FILE_DIR)/docker-postgres/$(DOCKER_FILE_NAME) ."
+	@docker build -t $(IMAGE_NAME)-postgres -f $(DOCKER_FILE_DIR)/docker-postgres/$(DOCKER_FILE_NAME) .
 
 .PHONY: help
 ##@ Help

@@ -47,13 +47,8 @@ RUN set -ex \
     && update-locale LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 \
     && useradd -ms /bin/bash -d ${AIRFLOW_USER_HOME} airflow \
     && pip install -U pip setuptools wheel \
-    && pip install pytz \
-    && pip install pyOpenSSL \
-    && pip install ndg-httpsclient \
-    && pip install pyasn1 \
-    && pip install "markupsafe==2.0.1" \
-    && pip install "wtforms<=2.3.3" \
-    # && pip install jpype1 \
+    && pip install pytz pyOpenSSL ndg-httpsclient pyasn1 \
+    && pip install "markupsafe==2.0.1" "wtforms<=2.3.3" \
     && pip install apache-airflow[crypto,celery,postgres,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis==3.2' \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
@@ -72,27 +67,21 @@ ENV SPARK_HOME /usr/local/spark
 ARG SPARK_VERSION=3.2.1
 ARG HADOOP_VERSION=3.2
 
-
 RUN cd "/tmp" && \
     curl https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz -o spark.tgz && \
     tar -xvzf spark.tgz && \
-    mkdir -p "${SPARK_HOME}/bin" && \
-    mkdir -p "${SPARK_HOME}/assembly/target/scala-2.12/jars"
-
-RUN cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/bin/* "${SPARK_HOME}/bin/" && \
+    mkdir -p "${SPARK_HOME}/bin" "${SPARK_HOME}/assembly/target/scala-2.12/jars" && \
+    cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/bin/* "${SPARK_HOME}/bin/" && \
     cp -a /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}/jars/* "${SPARK_HOME}/assembly/target/scala-2.12/jars/" && \
-    rm -r -f /tmp/spark.tgz && \
-    rm -r -f ${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}
+    rm -rf /tmp/spark.tgz /tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}
 
-
-RUN export SPARK_HOME
 ENV PATH $PATH:/usr/local/spark/bin
 
 COPY docker/docker-airflow/script/entrypoint.sh /entrypoint.sh
 COPY docker/docker-airflow/config/airflow.cfg ${AIRFLOW_USER_HOME}/airflow.cfg
 
-RUN chown -R airflow: ${AIRFLOW_USER_HOME}
-RUN chmod +x /entrypoint.sh
+RUN chown -R airflow: ${AIRFLOW_USER_HOME} \
+    && chmod +x /entrypoint.sh
 
 EXPOSE 8080 5555 8793
 

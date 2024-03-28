@@ -1,0 +1,81 @@
+# Phase 1: Setting up the basic environment and installing the necessary tools and dependencies
+FROM ubuntu:22.04 AS base
+
+ARG PYTHON_VERSION=3.9.17
+ARG SCALA_VERSION="2.12.10"
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG=en_US.UTF-8
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -q -y openjdk-8-jdk \
+    libsnappy-dev \
+    language-pack-en \
+    supervisor \
+    libsqlite3-dev \
+    gcc \
+    make \
+    git \
+    wget \
+    zlib1g-dev \
+    libffi-dev \
+    openssl \
+    libssl-dev \
+    libbz2-dev \
+    musl-dev \
+    bzip2 \
+    curl
+
+# Install pyenv
+RUN curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
+    -o pyenv-installer && \
+    /bin/sh pyenv-installer && \
+    rm pyenv-installer
+
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH
+
+# Install Python 和 Scala
+RUN pyenv install $PYTHON_VERSION && \
+    pyenv global $PYTHON_VERSION && \
+    pyenv rehash
+
+RUN cd "/tmp" && \
+    wget "https://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz" && \
+    tar xzf "scala-${SCALA_VERSION}.tgz" && \
+    mkdir -p "/home/workspace/scala" && \
+    rm "/tmp/scala-${SCALA_VERSION}/bin/"*.bat && \
+    mv "/tmp/scala-${SCALA_VERSION}/bin" "/tmp/scala-${SCALA_VERSION}/lib" "/home/workspace/scala" && \
+    ln -s "/home/workspace/scala/bin/"* "/usr/bin/"
+
+# Phase 2: Install Poetry and Python packages
+FROM base AS builder
+
+ENV HOME /app
+ENV PYENV_ROOT /root/.pyenv
+ENV PATH $PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
+ENV POETRY_HOME=/opt/poetry
+ENV POETRY_VIRTUALENVS_IN_PROJECT=true
+ENV PATH="$POETRY_HOME/bin:$PATH"
+
+WORKDIR /app
+
+# Install Poetry
+RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
+
+COPY pyproject.toml poetry.lock ./
+
+RUN poetry install --only main --no-root
+
+# Final stage: copy applications and dependencies over based on a minimized base image
+FROM base AS final
+
+ENV PATH="/home/workspace/.venv/bin:$PATH"
+
+WORKDIR /home/workspace
+
+COPY --from=builder /app/.venv ./.venv
+
+CMD ["bash"]
