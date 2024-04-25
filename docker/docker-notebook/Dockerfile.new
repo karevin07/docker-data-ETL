@@ -1,0 +1,43 @@
+# 第一階段：安裝依賴和建立JupyterLab和Python核心
+
+FROM data-etl-base:latest AS jupyterlab_builder
+
+ARG WORKSPACE=/home/workspace
+ARG JUPYTERLAB_VERSION=3.0.0
+ARG SCALA_KERNEL_VERSION=0.9.0
+ARG SCALA_VERSION=2.12.10
+
+RUN apt-get update -y && \
+    apt-get upgrade -y && \
+    apt install -y sqlite3 && \
+    pip install --upgrade pip
+
+# 安裝必要的Python套件
+RUN pip install matplotlib==3.5.1 \
+    psycopg2-binary==2.9.3 \
+    pysqlite3 \
+    wget==3.2 \
+    jupyterlab==${JUPYTERLAB_VERSION}
+
+# 安裝Scala核心
+RUN apt-get install -y ca-certificates-java --no-install-recommends && \
+    curl -Lo coursier https://git.io/coursier-cli && \
+    chmod +x coursier && \
+    ./coursier launch --fork almond:${SCALA_KERNEL_VERSION} --scala ${SCALA_VERSION} -- --display-name "Scala ${SCALA_VERSION}" --install && \
+    rm -f coursier
+
+# 第二階段：建立運行時映像
+
+FROM data-etl-base:latest
+
+ARG WORKSPACE=/home/workspace
+
+EXPOSE 8888
+
+WORKDIR ${WORKSPACE}
+
+# 從第一階段複製所需檔案和套件
+COPY --from=jupyterlab_builder /usr/local/bin/jupyter /usr/local/bin/jupyter
+COPY --from=jupyterlab_builder /usr/local/share/jupyter /usr/local/share/jupyter
+
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser", "--allow-root", "--NotebookApp.token="]

@@ -102,3 +102,5 @@ https://hub.docker.com/r/bitnami/spark
 
 https://github.com/puckel/docker-airflow
 
+https://medium.com/ava-information/airflow-2-0-docker-development-setup-docker-compose-postgresql-7911f553b42b
+
