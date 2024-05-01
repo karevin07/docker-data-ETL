@@ -21,7 +21,7 @@ services:
             postgres:
                 condition: service_started
         volumes:
-            - ./docker/docker-airflow/scripts/entrypoint.sh:/usr/local/airflow/entrypoint.sh
+            - ./docker/docker-airflow/config/airflow.cfg:/usr/local/airflow/airflow.cfg
             - ./dags:/usr/local/airflow/dags
             - ./spark/app:/home/workspace/app
             - ./spark/jars:/home/workspace/jars
@@ -54,7 +54,7 @@ services:
             - ./data:/home/workspace/data
         ports:
             - "8282:8080"
-        command: ["bash", "-c", "airflow db init && airflow users create -r Admin -u admin -e admin@example.com -f admin -l user -p admin && airflow webserver"]
+        command: ["bash", "-c", "airflow webserver"]
         healthcheck:
             test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
             interval: 30s

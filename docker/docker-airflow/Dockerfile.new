@@ -1,6 +1,9 @@
 FROM data-etl-base:latest AS airflow_base
 
-USER root
+ARG SPARK_VERSION=3.2.1
+ARG AIRFLOW_VERSION=2.9.0
+ENV PIP_INSTALL="/home/workspace/.venv/bin/pip"
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     emacs \
@@ -10,8 +13,8 @@ RUN apt-get update \
     && apt install wget -y
 
 # Install additional packages
-RUN pip install --upgrade pip && \
-    pip install apache-airflow==2.9.0 pyspark==3.2.1 'sqlalchemy>=1.4.36,<2.0' psycopg2-binary==2.9.6
+RUN ${PIP_INSTALL} install --upgrade pip && \
+    ${PIP_INSTALL} install apache-airflow==${AIRFLOW_VERSION} pyspark==${SPARK_VERSION} 'sqlalchemy>=1.4.36,<2.0' psycopg2-binary==2.9.6 apache-airflow-providers-apache-spark apache-airflow-providers-postgres
 
 FROM airflow_base AS final
 

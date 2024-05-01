@@ -1,8 +1,8 @@
 import os
 import requests
 import json
-from bs4 import BeautifulSoup
 import jieba
+from bs4 import BeautifulSoup
 
 from datetime import datetime, timedelta
 

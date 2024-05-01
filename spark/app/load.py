@@ -10,10 +10,8 @@ postgres_jdbc_url = sys.argv[3]
 postgres_user = sys.argv[4]
 postgres_passwd = sys.argv[5]
 
-spark = (SparkSession
-         .builder
-         .getOrCreate()
-         )
+spark = SparkSession.builder.getOrCreate()
+        
 
 pandasDF = pd.read_csv(input_file)
 sparkDF = spark.createDataFrame(pandasDF)

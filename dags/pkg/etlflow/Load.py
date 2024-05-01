@@ -2,13 +2,13 @@ import os
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
+from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
 from airflow.operators.bash_operator import BashOperator
-from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.dummy import DummyOperator
 
 from datetime import datetime, timedelta
 
-from airflow.operators.postgres_operator import PostgresOperator
+from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 
 def get_load_task(parent_dag_name, settings):
