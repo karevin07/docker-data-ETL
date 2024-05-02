@@ -1,7 +1,9 @@
 FROM ubuntu:22.04
 
-ARG PYTHON_VERSION=3.9.17
+ARG PYTHON_VERSION="3.9.17"
 ARG SCALA_VERSION="2.12.10"
+ARG PYTHON_TGZ_URL="https://www.python.org/ftp/python/${PYTHON_VERSION}/Python-${PYTHON_VERSION}.tgz"
+
 
 ENV DEBIAN_FRONTEND noninteractive
 ENV LANG=en_US.UTF-8
@@ -36,13 +38,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    python3 \
-    python3-pip \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+RUN wget "${PYTHON_TGZ_URL}" && \
+    tar xvf "Python-${PYTHON_VERSION}.tgz" && \
+    cd "Python-${PYTHON_VERSION}" && \
+    ./configure --enable-optimizations && \
+    make -j $(nproc) && \
+    make altinstall && \
+    cd .. && \
+    rm -rf "Python-${PYTHON_VERSION}" "Python-${PYTHON_VERSION}.tgz"
 
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
 # Install Scala
 RUN wget "https://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz" && \
@@ -50,8 +55,13 @@ RUN wget "https://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VE
     mv "scala-${SCALA_VERSION}" /usr/local/scala && \
     rm "scala-${SCALA_VERSION}.tgz"
 
-RUN ln -s /usr/bin/python3 /usr/bin/python
 
+RUN wget https://bootstrap.pypa.io/get-pip.py && \
+    python get-pip.py && \
+    rm get-pip.py
+
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
 
 ENV PATH="/usr/local/scala/bin:$PATH"
 
