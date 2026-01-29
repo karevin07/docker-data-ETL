@@ -1,0 +1,13 @@
+# Airflow specific ignores
+*.md
+Dockerfile
+Dockerfile.*
+
+# Logs and PIDs
+*.log
+*.pid
+*.out
+
+# Keep required files:
+# - script/entrypoint.sh
+# - config/airflow.cfg
