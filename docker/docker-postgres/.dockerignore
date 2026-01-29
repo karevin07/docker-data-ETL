@@ -1,0 +1,7 @@
+# PostgreSQL specific ignores
+*.md
+Dockerfile
+Dockerfile.*
+
+# Keep required files:
+# - pg-init-scripts/*.sh

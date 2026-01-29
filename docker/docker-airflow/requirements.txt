@@ -1,0 +1,20 @@
+# DAG Dependencies for Airflow
+# 這些是 DAG 執行時需要的套件，不包含 Airflow 本身的相依性
+
+# Data Processing
+pandas==2.2.3
+numpy==2.1.3
+
+# Web Scraping & HTTP
+requests==2.32.3
+beautifulsoup4==4.12.3
+
+# Chinese Text Processing
+jieba==0.42.1
+
+# Database
+# psycopg2-binary 已由 Airflow 官方映像提供，不需重複安裝
+
+# Note: 
+# - celery, kombu, tornado, werkzeug, SQLAlchemy 由 Airflow 官方映像提供
+# - pyspark 在 Dockerfile 的 builder stage 中安裝，不在此重複
