@@ -1,12 +1,12 @@
 from airflow import DAG
 from datetime import datetime
-from airflow.operators.python_operator import PythonOperator
-from airflow.operators.subdag_operator import SubDagOperator
+from airflow.operators.python import PythonOperator
+from airflow.utils.task_group import TaskGroup
 
 from pkg.settings import setting as settings
 from pkg.etlflow import Extract
-from pkg.etlflow.Transformation import get_transformation_get_task
-from pkg.etlflow.Load import get_load_task
+from pkg.etlflow.Transformation import create_transformation_tasks
+from pkg.etlflow.Load import create_load_tasks
 
 
 default_args = {
@@ -19,33 +19,23 @@ default_args = {
     'run_as_user': 'airflow'
 }
 
-dag_id = 'etl_flow'
-dag = DAG(
-    dag_id,
+with DAG(
+    'etl_flow',
     default_args=default_args,
-    schedule_interval='0 0 * * *',
+    schedule='0 0 * * *',
     catchup=False,
-)
+) as dag:
 
-extract_dag = PythonOperator(
-    dag=dag,
-    task_id='extract-data',
-    python_callable=Extract.main
-)
+    extract_task = PythonOperator(
+        task_id='extract-data',
+        python_callable=Extract.main
+    )
 
-transformation_dag = SubDagOperator(
-    dag=dag,
-    task_id='transformation-data',
-    subdag=get_transformation_get_task(dag_id, settings),
-)
+    with TaskGroup(group_id='transformation-data') as transformation_group:
+        create_transformation_tasks(settings)
 
+    with TaskGroup(group_id='load-data') as load_group:
+        create_load_tasks(settings)
 
-load_dag = SubDagOperator(
-    dag=dag,
-    task_id='load-data',
-    subdag=get_load_task(dag_id, settings),
-)
-extract_dag >> transformation_dag
-
-transformation_dag >> load_dag
+    extract_task >> transformation_group >> load_group
 

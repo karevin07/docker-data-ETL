@@ -1,11 +1,9 @@
 from airflow import DAG
 from datetime import datetime
-from airflow.operators.bash_operator import BashOperator
-from airflow.operators.subdag_operator import SubDagOperator
+from airflow.utils.task_group import TaskGroup
 
 from pkg.settings import setting as settings
-from pkg.etlflow.Clean import get_clear_all_data_dag
-import os
+from pkg.etlflow.Clean import create_clean_tasks
 
 
 default_args = {
@@ -18,19 +16,12 @@ default_args = {
     'run_as_user': 'airflow'
 }
 
-dag_id = 'clean_flow'
-dag = DAG(
-    dag_id,
+with DAG(
+    'clean_flow',
     default_args=default_args,
-    schedule_interval='0 0 * * *',
+    schedule='0 0 * * *',
     catchup=False,
-)
+) as dag:
 
-
-clear_all_data_subdag = SubDagOperator(
-    dag=dag,
-    task_id='clear_all_data',
-    subdag=get_clear_all_data_dag(dag_id, settings),
-)
-
-clear_all_data_subdag
+    with TaskGroup(group_id='clear_all_data') as clean_group:
+        create_clean_tasks(settings)
