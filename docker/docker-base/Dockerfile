@@ -1,77 +1,156 @@
-FROM ubuntu:22.04
+# syntax=docker/dockerfile:1
+# =============================================================================
+# Base Python Image for Docker Data ETL Platform (Fast Build Version)
+# =============================================================================
+# This multi-stage Dockerfile creates an optimized base image with:
+# - Python 3.12.12 (official Docker image - MUCH FASTER!)
+# - Scala 2.13.18 (latest 2.13.x compatible with Spark 4.x)
+# - Poetry for dependency management
+# - OpenJDK 17 (required for Spark 4.x)
+# =============================================================================
+# Build time: ~2-3 minutes (vs 15-20 minutes with source compilation)
+# =============================================================================
 
-ARG WORKSPACE=/home/workspace
-ARG PYTHON_VERSION=3.9.17
-ENV SCALA_VERSION="2.12.10"
-ENV SCALA_HOME="${WORKSPACE}/scala"
+# -----------------------------------------------------------------------------
+# Stage 1: Builder - Install dependencies
+# -----------------------------------------------------------------------------
+FROM python:3.12.12-slim-bookworm AS builder
 
-# Setup python and java and base system
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG=en_US.UTF-8
+# Build arguments for version management
+ARG SCALA_VERSION=2.13.18
+ARG POETRY_VERSION=1.8.5
 
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Install build dependencies and Java
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get install -q -y openjdk-8-jdk \
-    libsnappy-dev \
-    language-pack-en \
-    supervisor \
-    libsqlite3-dev \
-    gcc \
-    make \
-    git \
-    wget \
-    zlib1g-dev \
-    libffi-dev \
-    openssl \
-    libssl-dev \
-    libbz2-dev \
-    musl-dev \
-    bzip2 \
-    curl
+    apt-get install -y --no-install-recommends \
+        # Build tools
+        build-essential \
+        gcc \
+        git \
+        wget \
+        curl \
+        ca-certificates \
+        # Java (Debian Bookworm has OpenJDK 17)
+        openjdk-17-jdk-headless \
+        # Locale support
+        locales \
+        # Snappy compression for Spark
+        libsnappy-dev && \
+    # Generate locale
+    locale-gen en_US.UTF-8 && \
+    # Cleanup in same layer
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
+# Install Scala
+WORKDIR /tmp
+RUN wget -q "https://github.com/scala/scala/releases/download/v${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz" && \
+    tar -xzf "scala-${SCALA_VERSION}.tgz" && \
+    mkdir -p /usr/local/scala && \
+    mv "scala-${SCALA_VERSION}"/* /usr/local/scala/ && \
+    rm -rf "scala-${SCALA_VERSION}" "scala-${SCALA_VERSION}.tgz"
 
-# --- Set environment variables
-ENV HOME /app
-ENV PYENV_ROOT $HOME/.pyenv
-ENV PATH $PYENV_ROOT/shims:$PATH:$PYENV_ROOT/bin
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST 1
+# Upgrade pip and install Poetry
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir "poetry==${POETRY_VERSION}"
 
-# ---- Install pyenv
-RUN curl -L https://raw.githubusercontent.com/yyuu/pyenv-installer/master/bin/pyenv-installer \
-    -o pyenv-installer && \
-    /bin/sh pyenv-installer && \
-    rm pyenv-installer
+# Configure Poetry
+ENV POETRY_HOME=/opt/poetry \
+    POETRY_VIRTUALENVS_IN_PROJECT=true \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-# ---- Install Python
-RUN pyenv install $PYTHON_VERSION
-RUN pyenv global $PYTHON_VERSION
-RUN pyenv rehash
-
-# ---- Install Scala
-
-RUN cd "/tmp" && \
-    wget "https://downloads.typesafe.com/scala/${SCALA_VERSION}/scala-${SCALA_VERSION}.tgz" && \
-    tar xzf "scala-${SCALA_VERSION}.tgz" && \
-    mkdir -p "${SCALA_HOME}" && \
-    rm "/tmp/scala-${SCALA_VERSION}/bin/"*.bat && \
-    mv "/tmp/scala-${SCALA_VERSION}/bin" "/tmp/scala-${SCALA_VERSION}/lib" "${SCALA_HOME}" && \
-    ln -s "${SCALA_HOME}/bin/"* "/usr/bin/"
-
-ENV PATH=${PATH}:${SCALA_HOME}/bin
-
-# ---- Poetry install
-
-ENV POETRY_HOME=/opt/poetry
-ENV POETRY_VIRTUALENVS_IN_PROJECT=true
-ENV PATH="$POETRY_HOME/bin:$PATH"
-RUN python -c 'from urllib.request import urlopen; print(urlopen("https://install.python-poetry.org").read().decode())' | python -
-RUN pip install --upgrade pip
-
-ENV PATH="/.venv/bin:$PATH"
+# Install Python dependencies from pyproject.toml
+WORKDIR /app
 COPY pyproject.toml ./
-RUN poetry install --only main --no-root
-RUN rm -f ./pyproject.toml && rm -f ./poetry.lock
+RUN poetry install --only main --no-root --no-cache && \
+    rm -rf /tmp/poetry_cache
 
+# -----------------------------------------------------------------------------
+# Stage 2: Runtime - Minimal production image
+# -----------------------------------------------------------------------------
+FROM python:3.12.12-slim-bookworm
+
+# Metadata labels following OCI standards
+LABEL org.opencontainers.image.title="Data ETL Base Image" \
+      org.opencontainers.image.description="Base Python image with Scala for ETL workflows" \
+      org.opencontainers.image.version="2.0.0-fast" \
+      org.opencontainers.image.authors="Kelvin Liao" \
+      org.opencontainers.image.licenses="MIT" \
+      maintainer="Kelvin Liao"
+
+# Build arguments
+ARG WORKSPACE=/home/workspace
+ARG APP_USER=etluser
+ARG APP_UID=1000
+ARG APP_GID=1000
+
+# Environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    SCALA_HOME=/usr/local/scala \
+    PATH="/usr/local/scala/bin:${PATH}" \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Install runtime dependencies only
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        # Java runtime (Debian Bookworm has OpenJDK 17)
+        openjdk-17-jre-headless \
+        # Utilities
+        ca-certificates \
+        curl \
+        wget \
+        git \
+        supervisor \
+        # Snappy for Spark
+        libsnappy1v5 \
+        # Locale
+        locales && \
+    locale-gen en_US.UTF-8 && \
+    # Cleanup
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Copy Scala from builder
+COPY --from=builder /usr/local/scala /usr/local/scala
+
+# Copy virtual environment (Poetry not needed in runtime)
+COPY --from=builder /app/.venv /app/.venv
+
+# Create non-root user and group
+RUN groupadd -g ${APP_GID} ${APP_USER} && \
+    useradd -u ${APP_UID} -g ${APP_GID} -m -s /bin/bash ${APP_USER} && \
+    mkdir -p ${WORKSPACE} && \
+    chown -R ${APP_USER}:${APP_USER} ${WORKSPACE} /app
+
+# Add virtual environment to PATH
+ENV PATH="/app/.venv/bin:${PATH}"
+
+# Set working directory
 WORKDIR ${WORKSPACE}
+
+# Switch to non-root user
+USER ${APP_USER}
+
+# Verify installations
+RUN python --version && \
+    pip --version && \
+    scala -version
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import sys; sys.exit(0)" || exit 1
 
 CMD ["bash"]

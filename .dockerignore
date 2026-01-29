@@ -1,0 +1,90 @@
+# Git files
+.git
+.gitignore
+.gitattributes
+
+# Claude Code files
+.claude/
+CLAUDE.md
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+*.manifest
+*.spec
+.venv/
+venv/
+ENV/
+env/
+
+# Poetry
+poetry.lock
+
+# Testing
+.pytest_cache/
+.coverage
+.tox/
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+logs/
+*.out
+
+# Airflow
+airflow-webserver.pid
+airflow.cfg
+airflow.db
+unittests.cfg
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data files (only include necessary ones)
+data/
+notebooks/
+
+# Docker
+.dockerignore
+docker-compose*.yml
+*.md
+README*
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+Jenkinsfile
+
+# Documentation
+docs/
+*.md
+
+# Temporary files
+tmp/
+temp/
+*.tmp
