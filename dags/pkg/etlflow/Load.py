@@ -1,17 +1,12 @@
 import os
-from datetime import datetime, timedelta
 
-from airflow import DAG
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy import DummyOperator
-
-from datetime import datetime, timedelta
-
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 
 
-def get_load_task(parent_dag_name, settings):
+def create_load_tasks(settings):
+    """Create load tasks within a TaskGroup"""
     ###############################################
     # Parameters
     ###############################################
@@ -32,34 +27,12 @@ def get_load_task(parent_dag_name, settings):
     title_table_name = settings.TITLE_TABLE
 
     ###############################################
-    # DAG Definition
+    # Task Definition
     ###############################################
-    now = datetime.now()
-
-    default_args = {
-        "owner": "airflow",
-        "depends_on_past": False,
-        "start_date": datetime(now.year, now.month, now.day),
-        "email": ["airflow@airflow.com"],
-        "email_on_failure": False,
-        "email_on_retry": False,
-        "retries": 1,
-        "retry_delay": timedelta(minutes=1),
-        "run_as_user": "airflow"
-    }
-
-    dag = DAG(
-        dag_id=f"{parent_dag_name}.load-data",
-        description="This DAG is a sample of integration between Spark and DB. It reads CSV files, load them into a Postgres DB and then read them from the same Postgres DB.",
-        default_args=default_args,
-        schedule_interval=timedelta(1)
-    )
-
-    start_create_table_task = DummyOperator(task_id="start_create_table", dag=dag)
-    start_load_data_task = DummyOperator(task_id="start_load_data", dag=dag)
+    start_create_table_task = DummyOperator(task_id="start_create_table")
+    start_load_data_task = DummyOperator(task_id="start_load_data")
 
     postgres_create_title_table = PostgresOperator(
-        dag=dag,
         task_id="create_title_table",
         database=postgres_db,
         postgres_conn_id="postgres_default",
@@ -72,7 +45,6 @@ def get_load_task(parent_dag_name, settings):
     )
 
     postgres_create_content_table = PostgresOperator(
-        dag=dag,
         task_id="create_content_table",
         database=postgres_db,
         postgres_conn_id="postgres_default",
@@ -93,8 +65,7 @@ def get_load_task(parent_dag_name, settings):
         application_args=[word_input_path, word_table_name, postgres_jdbc, postgres_user, postgres_pwd],
         jars=spark_extra_path,
         driver_class_path=spark_extra_path,
-        executor_memory="1g",
-        dag=dag
+        executor_memory="1g"
     )
 
     spark_job_title_load_postgres = SparkSubmitOperator(
@@ -106,8 +77,7 @@ def get_load_task(parent_dag_name, settings):
         application_args=[title_input_path, title_table_name, postgres_jdbc, postgres_user, postgres_pwd],
         jars=spark_extra_path,
         driver_class_path=spark_extra_path,
-        executor_memory="1g",
-        dag=dag
+        executor_memory="1g"
     )
 
     create_table_tasks = [
@@ -120,7 +90,7 @@ def get_load_task(parent_dag_name, settings):
         spark_job_title_load_postgres
     ]
 
-    end = DummyOperator(task_id="end", dag=dag)
+    end = DummyOperator(task_id="end")
 
     for table_task in create_table_tasks:
         start_create_table_task >> table_task
@@ -130,4 +100,4 @@ def get_load_task(parent_dag_name, settings):
         start_load_data_task >> load_task
         load_task >> end
 
-    return dag
+    return end  # Return last task for chaining
