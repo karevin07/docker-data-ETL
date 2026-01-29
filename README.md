@@ -46,20 +46,54 @@ flowchart
     
 ```
 
-### build image
+### Build Images
 
-- use `build.sh`
+Build all images:
+```bash
+make build-all
+```
 
-`bash build.sh {image_name}`
+Or build specific images:
+```bash
+make build-base          # Base Python image
+make build-spark-base    # Spark base image
+make build-spark-master  # Spark master
+make build-spark-worker  # Spark workers
+make build-airflow       # Airflow
+make build-notebook      # JupyterLab
+make build-postgres      # PostgreSQL
+```
 
-- `Makefile`
+### Quick Start
 
-``make build-all``
+**Option 1: Complete Setup (Recommended)**
 
+Start all services and configure connections automatically:
+```bash
+make start
+```
 
-* Get started with docker compose
+**Option 2: Manual Setup**
 
-```docker-compose up -d```
+Start services only:
+```bash
+make up
+```
+
+Then configure connections:
+```bash
+make setup-connections
+```
+
+### Common Commands
+
+```bash
+make status    # Show service status
+make logs      # View logs (Ctrl+C to exit)
+make restart   # Restart all services
+make down      # Stop all services
+make help      # Show all available commands
+```
 
 
 ### Service
@@ -71,13 +105,48 @@ flowchart
 
 ### Airflow connection
 
-- set spark connection
+#### Option 1: Automated Setup (Recommended)
 
-![](https://i.imgur.com/0mVRf18.png)
+Run the setup script after starting all containers:
 
-- postgres connection
+```bash
+bash scripts/setup-airflow-connections.sh
+```
 
-![](https://i.imgur.com/VyQf2dU.png)
+This script will automatically configure:
+- Spark connection (`spark_default`)
+- PostgreSQL connection (`postgres_default`)
+
+
+#### Option 2: Manual Setup via Web UI
+
+1. Open Airflow UI: http://localhost:8282
+2. Navigate to `Admin` → `Connections`
+3. Click `+` to add new connection
+
+**Spark Connection Settings:**
+- Connection Id: `spark_default`
+- Connection Type: `Spark`
+- Host: `spark://spark-master`
+- Port: `7077`
+- Extra: `{"queue": "root.default", "deploy-mode": "client"}`
+
+
+**PostgreSQL Connection Settings:**
+- Connection Id: `postgres_default`
+- Connection Type: `Postgres`
+- Host: `postgres`
+- Schema: `airflow`
+- Login: `airflow`
+- Password: `airflow`
+- Port: `5432`
+
+
+#### Verify Connections
+
+```bash
+docker exec -it data-etl-airflow airflow connections list
+```
 
 
 ### ETL
