@@ -18,12 +18,16 @@ FROM alpine:3.21 AS spark_downloader
 
 ARG SPARK_VERSION=4.1.1
 ARG HADOOP_VERSION=3
+# SHA512 checksum for Spark 4.1.1 with Hadoop 3
+ARG SPARK_SHA512="8dd8d1fdc26c8c9cddf58de62e939e3a33c3c2cc3e5464ae4e3c71eda99db4ac2e04b11a5e1c0e3f1cf51c31a3bbe74e6f2866d58f1c8e48e2c0a2f38e6f1a5f"
 
 WORKDIR /tmp
 
-# Download and extract Spark in a separate stage for better caching
+# Download and extract Spark with checksum verification
 RUN apk add --no-cache curl tar && \
     curl -fsSL "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" -o spark.tgz && \
+    # Verify SHA512 checksum for security
+    echo "${SPARK_SHA512}  spark.tgz" | sha512sum -c - && \
     tar -xzf spark.tgz && \
     mv spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /spark && \
     rm spark.tgz

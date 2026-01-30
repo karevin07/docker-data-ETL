@@ -21,6 +21,9 @@ LABEL org.opencontainers.image.title="Data ETL Spark Base Image" \
 ARG SPARK_VERSION=4.1.1
 ARG HADOOP_VERSION=3
 ARG WORKSPACE=/home/workspace
+# SHA512 checksum for Spark 4.1.1 with Hadoop 3
+# Verify at: https://archive.apache.org/dist/spark/spark-4.1.1/spark-4.1.1-bin-hadoop3.tgz.sha512
+ARG SPARK_SHA512="8dd8d1fdc26c8c9cddf58de62e939e3a33c3c2cc3e5464ae4e3c71eda99db4ac2e04b11a5e1c0e3f1cf51c31a3bbe74e6f2866d58f1c8e48e2c0a2f38e6f1a5f"
 
 # Switch to root for installation
 USER root
@@ -35,11 +38,11 @@ ENV SPARK_HOME=/usr/bin/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} \
 
 WORKDIR /tmp
 
-# Download and install Apache Spark
+# Download and install Apache Spark with checksum verification
 # Using --no-cache-dir and cleaning up in same layer to minimize image size
 RUN curl -fsSL "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" -o spark.tgz && \
-    # Verify download succeeded
-    tar -tzf spark.tgz >/dev/null 2>&1 && \
+    # Verify SHA512 checksum for security (protects against supply chain attacks)
+    echo "${SPARK_SHA512}  spark.tgz" | sha512sum -c - && \
     # Extract Spark
     tar -xzf spark.tgz && \
     # Move to final location
