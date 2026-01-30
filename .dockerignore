@@ -72,8 +72,12 @@ notebooks/
 # Docker
 .dockerignore
 docker-compose*.yml
+# Exclude all markdown files
 *.md
-README*
+# But include these essential files for build
+!README.md
+!pyproject.toml
+!uv.lock
 
 # CI/CD
 .github/
@@ -82,7 +86,6 @@ Jenkinsfile
 
 # Documentation
 docs/
-*.md
 
 # Temporary files
 tmp/
