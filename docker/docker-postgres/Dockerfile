@@ -7,12 +7,50 @@
 # - Custom initialization scripts
 # - Optimized configuration for ETL workloads
 # =============================================================================
-# IMPORTANT MIGRATION NOTE:
-# This upgrades from PostgreSQL 9.6 to 16.6 (major version upgrade)
-# You MUST perform a database dump/restore migration:
-#   1. Export data: pg_dump -U airflow airflow > backup.sql
-#   2. Update to new image
-#   3. Restore data: psql -U airflow airflow < backup.sql
+# ⚠️  CRITICAL MIGRATION WARNING (READ BEFORE UPGRADING) ⚠️
+# =============================================================================
+# This image represents a MAJOR VERSION UPGRADE from PostgreSQL 9.6 to 16.6.
+# PostgreSQL does NOT support in-place upgrades across these versions.
+#
+# ❌ DANGER: If you have an existing Docker volume (e.g., "postgres_data") with
+#    PostgreSQL 9.6 data, you MUST NOT reuse that volume directly with this
+#    image. Doing so will cause PostgreSQL to FAIL TO START or result in
+#    DATA LOSS/CORRUPTION.
+#
+# ✅ SAFE MIGRATION PROCEDURE:
+#
+# Step 1: Start your OLD PostgreSQL 9.6 container with existing volume
+#         docker-compose up postgres
+#
+# Step 2: Export data from the old instance
+#         docker exec data-etl-postgres pg_dump -U airflow airflow > backup.sql
+#         # Or with custom format for better performance:
+#         docker exec data-etl-postgres pg_dump -U airflow -Fc airflow > backup.dump
+#
+# Step 3: Stop and remove the old container (keep backup safe!)
+#         docker-compose down
+#         # OPTIONAL: Backup the old volume before deletion
+#         docker run --rm -v postgres_data:/data -v $(pwd):/backup \
+#           busybox tar czf /backup/postgres_9.6_backup.tar.gz /data
+#
+# Step 4: Remove old volume (or rename it for safety)
+#         docker volume rm data-etl-postgres-data
+#         # OR: docker volume rename data-etl-postgres-data postgres-data-old
+#
+# Step 5: Start NEW container with this 16.6 image (creates fresh volume)
+#         docker-compose up -d postgres
+#
+# Step 6: Restore data into the new instance
+#         # Wait for PostgreSQL to be ready
+#         docker exec data-etl-postgres pg_isready -U airflow
+#         # Restore from backup
+#         docker exec -i data-etl-postgres psql -U airflow airflow < backup.sql
+#         # Or with custom format:
+#         docker exec -i data-etl-postgres pg_restore -U airflow -d airflow < backup.dump
+#
+# Step 7: Verify data integrity and test your ETL workflows
+#
+# For more information, see: docs/POSTGRESQL_MIGRATION.md
 # =============================================================================
 
 FROM postgres:16.6-alpine
