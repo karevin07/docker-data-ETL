@@ -131,6 +131,10 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
 COPY --from=jupyter_builder --chown=${NB_UID}:${NB_GID} \
     /opt/conda/lib/python3.12/site-packages /opt/conda/lib/python3.12/site-packages
 
+# Copy Scala kernel (Almond) from builder
+COPY --from=jupyter_builder --chown=${NB_UID}:${NB_GID} \
+    /home/jovyan/.local/share/jupyter /home/jovyan/.local/share/jupyter
+
 # Create workspace directories
 RUN mkdir -p \
         ${WORKSPACE}/notebooks \
