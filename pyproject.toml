@@ -24,6 +24,9 @@ dependencies = [
     "psycopg2-binary==2.9.10",
     "redis==5.2.1",
     "pytz==2025.1",
+    # Security: explicitly pin safe versions
+    "setuptools>=75.6.0",  # CVE fixes
+    "urllib3>=2.6.3",      # Security patches
 ]
 
 [project.optional-dependencies]
