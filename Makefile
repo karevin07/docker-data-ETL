@@ -326,7 +326,7 @@ clean-all: clean-containers clean-images prune ## remove everything except volum
 # Quick Access URLs
 # =============================================================================
 
-.PHONY: urls open-airflow open-spark open-notebook
+.PHONY: urls open-airflow open-spark open-notebook notebook-token
 
 urls: ## display service URLs
 	@echo ""
@@ -347,6 +347,9 @@ open-spark: ## open Spark UI in browser
 
 open-notebook: ## open JupyterLab in browser
 	@open http://0.0.0.0:8888 2>/dev/null || xdg-open http://0.0.0.0:8888 2>/dev/null || echo "Please open http://0.0.0.0:8888 manually"
+
+notebook-token: ## show JupyterLab server info and access token
+	@docker exec -it data-etl-jupyterlab jupyter server list
 
 # =============================================================================
 # Help
