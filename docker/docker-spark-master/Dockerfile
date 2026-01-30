@@ -18,10 +18,11 @@ LABEL org.opencontainers.image.title="Data ETL Spark Master" \
 USER root
 
 # Spark Master specific environment variables
+# Note: SPARK_HOME is inherited from base image
 ENV SPARK_MODE=master \
     SPARK_MASTER_WEBUI_PORT=8080 \
     SPARK_MASTER_PORT=7077 \
-    SPARK_MASTER_LOG=/usr/bin/spark-4.1.1-bin-hadoop3/logs
+    SPARK_MASTER_LOG=${SPARK_HOME}/logs
 
 # Create log directory and set permissions
 RUN mkdir -p ${SPARK_MASTER_LOG} && \
