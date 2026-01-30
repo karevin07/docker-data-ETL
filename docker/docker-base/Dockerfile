@@ -21,7 +21,7 @@ ARG SCALA_VERSION=2.13.18
 ARG POETRY_VERSION=1.8.5
 # SHA256 checksum for Scala 2.13.18
 # Verify at: https://github.com/scala/scala/releases/download/v2.13.18/scala-2.13.18.tgz
-ARG SCALA_SHA256="b8d649de9ba319b3b91c5c0e83d1bd9b9e7cb1d8cf8a5de6a7ae20cf7f7f3f1e"
+ARG SCALA_SHA256="1834d09fd5c78ec77e9a933ab76c724280a8ec9595a332a6112823787a9ac3e6"
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive \

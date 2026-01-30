@@ -1,50 +1,48 @@
-# docker-data-etl
+# Docker Data ETL Platform
 
-This project is a data etl flow with airflow and spark:
+A lightweight ETL platform that extracts news articles via web crawler, performs Chinese word segmentation using jieba, and loads processed data into PostgreSQL. Built with Airflow for orchestration and Spark for distributed data processing.
 
-A lightweight data etl flow extract news by web crawler, use jieba to cut the words, load the data to postgres
+## Architecture
 
-### architecture
 ```mermaid
-flowchart
+flowchart TB
+    user([👤 Data Engineer])
 
-    user("Data Enginner")
-    
-    
-    master("master")
-    worker1("worker1")
-    worker2("worler2")
-    worker3("worler3")
-    
-    db[("Postgres")]
-    notebook("Jupyerlab")
-    
-    user
-
-    subgraph spark-cluster["spark-cluster(standalone)"]
-    
+    subgraph spark["🔥 Spark Cluster (Standalone)"]
         direction TB
-        master --> worker1 
-        master --> worker2 
+        master[Master Node]
+        worker1[Worker 1]
+        worker2[Worker 2]
+        worker3[Worker 3]
+        master --> worker1
+        master --> worker2
         master --> worker3
+    end
 
+    subgraph airflow["🌊 Airflow"]
+        scheduler[Scheduler]
+        webserver[Web Server]
+        executor[Executor]
     end
-    
-    subgraph airflow ["Airflow"]
-    
-        
-    
-    end
-    
-    db <--> airflow
-    
-    user --> airflow
-    user --> notebook
-    
-    notebook -..-> spark-cluster
-    airflow--> spark-cluster
-    
+
+    db[(🐘 PostgreSQL<br/>Database)]
+    notebook[📓 JupyterLab]
+
+    user --> |Configure & Monitor| airflow
+    user --> |Interactive Dev| notebook
+
+    airflow <--> |Metadata| db
+    airflow --> |Submit Jobs| spark
+    notebook -.- |Ad-hoc Analysis| spark
+    spark --> |Write Results| db
+
+    style spark fill:#fff4e1
+    style airflow fill:#e1f5ff
+    style db fill:#e8f5e9
+    style notebook fill:#f3e5f5
 ```
+
+## Getting Started
 
 ### Build Images
 
@@ -96,14 +94,18 @@ make help      # Show all available commands
 ```
 
 
-### Service
+### Service Endpoints
 
-- [airflow](http://0.0.0.0:/8282)
-- [spark](http://0.0.0.0:8080)
-- [jupyterlab](http://0.0.0.0:8888)
+After starting the services, you can access:
 
+| Service | URL | Description |
+|---------|-----|-------------|
+| Airflow Web UI | http://localhost:8282 | Monitor and manage ETL workflows |
+| Spark Master UI | http://localhost:8080 | Monitor Spark cluster and jobs |
+| JupyterLab | http://localhost:8888 | Interactive development environment |
+| PostgreSQL | localhost:5432 | Database (user: airflow, password: airflow) |
 
-### Airflow connection
+### Airflow Connection Setup
 
 #### Option 1: Automated Setup (Recommended)
 
@@ -149,27 +151,67 @@ docker exec -it data-etl-airflow airflow connections list
 ```
 
 
-### ETL
+## ETL Pipeline Flow
 
-![](https://i.imgur.com/qRnngUg.png)
+The daily ETL workflow processes news articles through three sequential stages:
 
-- extract: web crawler
-- transformation: wordcount using spark
-- load: spark write data to postgres
+```mermaid
+flowchart TD
+    Start([Start: Daily Trigger]) --> Extract
+
+    subgraph Extract["📰 Extract Stage"]
+        E1[Web Crawler<br/>The News Lens]
+        E2[Filter Articles<br/>Last 7 Days]
+        E3[Save to JSON<br/>data/input/input.json]
+        E1 --> E2 --> E3
+    end
+
+    subgraph Transform["⚙️ Transformation Stage<br/>(Spark SubDAG)"]
+        T1[Spark Job:<br/>transformation.py]
+        T2[Jieba Word<br/>Segmentation]
+        T3[Word Count<br/>Analysis]
+        T4[Output CSVs<br/>- output_title.csv<br/>- output_content.csv]
+        T1 --> T2 --> T3 --> T4
+    end
+
+    subgraph Load["💾 Load Stage<br/>(Spark SubDAG)"]
+        L1[Create Tables<br/>title & content]
+        L2[Spark Job:<br/>load.py]
+        L3[Write to<br/>PostgreSQL]
+        L1 --> L2 --> L3
+    end
+
+    Extract --> Transform
+    Transform --> Load
+    Load --> End([End])
+
+    style Extract fill:#e1f5ff
+    style Transform fill:#fff4e1
+    style Load fill:#e8f5e9
+    style Start fill:#f3e5f5
+    style End fill:#f3e5f5
+```
+
+### Pipeline Components
+
+- **Extract**: Web crawler scrapes news articles from The News Lens politics section
+- **Transformation**: Spark job performs Chinese word segmentation using jieba and calculates word frequencies
+- **Load**: Spark job writes processed data to PostgreSQL database
 
 
 
 
-## Reference
+## References
 
+This project was inspired by and built upon the following resources:
 
-https://medium.com/data-arena/building-a-spark-and-airflow-development-environment-with-docker-f0b9b625edd8
+- [Building a Spark and Airflow Development Environment with Docker](https://medium.com/data-arena/building-a-spark-and-airflow-development-environment-with-docker-f0b9b625edd8)
+- [Spark Standalone Cluster on Docker](https://github.com/cluster-apps-on-docker/spark-standalone-cluster-on-docker)
+- [Bitnami Spark Docker Image](https://hub.docker.com/r/bitnami/spark)
+- [Docker Airflow](https://github.com/puckel/docker-airflow)
+- [Airflow 2.0 Docker Development Setup](https://medium.com/ava-information/airflow-2-0-docker-development-setup-docker-compose-postgresql-7911f553b42b)
 
-https://github.com/cluster-apps-on-docker/spark-standalone-cluster-on-docker
+## License
 
-https://hub.docker.com/r/bitnami/spark
-
-https://github.com/puckel/docker-airflow
-
-https://medium.com/ava-information/airflow-2-0-docker-development-setup-docker-compose-postgresql-7911f553b42b
+MIT
 
