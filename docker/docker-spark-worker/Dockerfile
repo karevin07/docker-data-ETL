@@ -18,9 +18,10 @@ LABEL org.opencontainers.image.title="Data ETL Spark Worker" \
 USER root
 
 # Spark Worker specific environment variables
+# Note: SPARK_HOME is inherited from base image
 ENV SPARK_MODE=worker \
     SPARK_WORKER_WEBUI_PORT=8081 \
-    SPARK_WORKER_LOG=/usr/bin/spark-4.1.1-bin-hadoop3/logs \
+    SPARK_WORKER_LOG=${SPARK_HOME}/logs \
     SPARK_WORKER_MEMORY=1G \
     SPARK_WORKER_CORES=1
 

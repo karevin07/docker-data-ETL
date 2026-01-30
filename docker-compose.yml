@@ -38,22 +38,26 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
-      # Security keys - 從 .env 檔案讀取或使用預設值
-      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-olDpdQh84IPSamGzX3HuJQ==}
-      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-olDpdQh84IPSamGzX3HuJQ==}
+      # Admin user credentials - REQUIRED (從 .env 檔案讀取)
+      AIRFLOW_ADMIN_USERNAME: ${AIRFLOW_ADMIN_USERNAME}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
+      AIRFLOW_ADMIN_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME:-Admin}
+      AIRFLOW_ADMIN_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME:-User}
+      # Security keys - REQUIRED (從 .env 檔案讀取)
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       # Spark connection
       SPARK_HOME: /usr/local/spark
     volumes:
+      # Airflow directories
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./spark/app:/opt/airflow/spark/app
-      - ./spark/jars:/opt/airflow/spark/jars
-      - ./data:/opt/airflow/data
       - ./requirements.txt:/opt/airflow/requirements.txt
       - ./docker/docker-airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - ./docker/docker-airflow/scripts/entrypoint.sh:/entrypoint.sh
-      # Mount /home/workspace for compatibility with Spark paths
+      # Application data (used by DAGs and Spark jobs via SRC_FOLDER=/home/workspace)
       - ./data:/home/workspace/data
       - ./spark/app:/home/workspace/app
       - ./spark/jars:/home/workspace/jars
@@ -83,22 +87,26 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
       AIRFLOW__CORE__LOAD_EXAMPLES: "False"
       AIRFLOW__CORE__DAGS_FOLDER: /opt/airflow/dags
-      # Security keys - 從 .env 檔案讀取或使用預設值
-      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY:-olDpdQh84IPSamGzX3HuJQ==}
-      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY:-olDpdQh84IPSamGzX3HuJQ==}
+      # Admin user credentials - REQUIRED (從 .env 檔案讀取)
+      AIRFLOW_ADMIN_USERNAME: ${AIRFLOW_ADMIN_USERNAME}
+      AIRFLOW_ADMIN_PASSWORD: ${AIRFLOW_ADMIN_PASSWORD}
+      AIRFLOW_ADMIN_EMAIL: ${AIRFLOW_ADMIN_EMAIL:-admin@example.com}
+      AIRFLOW_ADMIN_FIRSTNAME: ${AIRFLOW_ADMIN_FIRSTNAME:-Admin}
+      AIRFLOW_ADMIN_LASTNAME: ${AIRFLOW_ADMIN_LASTNAME:-User}
+      # Security keys - REQUIRED (從 .env 檔案讀取)
+      AIRFLOW__WEBSERVER__SECRET_KEY: ${AIRFLOW_SECRET_KEY}
+      AIRFLOW__CORE__FERNET_KEY: ${AIRFLOW_FERNET_KEY}
       # Spark connection
       SPARK_HOME: /usr/local/spark
     volumes:
+      # Airflow directories
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./spark/app:/opt/airflow/spark/app
-      - ./spark/jars:/opt/airflow/spark/jars
-      - ./data:/opt/airflow/data
       - ./requirements.txt:/opt/airflow/requirements.txt
       - ./docker/docker-airflow/config/airflow.cfg:/opt/airflow/airflow.cfg
       - ./docker/docker-airflow/scripts/entrypoint.sh:/entrypoint.sh
-      # Mount /home/workspace for compatibility with Spark paths
+      # Application data (used by DAGs and Spark jobs via SRC_FOLDER=/home/workspace)
       - ./data:/home/workspace/data
       - ./spark/app:/home/workspace/app
       - ./spark/jars:/home/workspace/jars
@@ -217,6 +225,9 @@ services:
     restart: unless-stopped
     environment:
       JUPYTER_ENABLE_LAB: "yes"
+      # Security - OPTIONAL: Set a token to access JupyterLab (從 .env 檔案讀取)
+      # If not set, a random token will be auto-generated and shown in logs
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-}
       # Spark configuration
       SPARK_MASTER: spark://spark-master:7077
     volumes:

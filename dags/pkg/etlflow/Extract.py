@@ -64,18 +64,18 @@ def get_links(url):
                         date_found = True
                         break
                     except Exception:
+                        # 若日期格式異常或解析失敗，略過此元素並繼續向上查找父元素
                         pass
 
                 parent = parent.parent
             else:
                 break
 
-        # 如果找不到日期但連結有效，也加入（為了容錯）
-        if not date_found and href not in processed_hrefs:
-            # 可選：是否要包含沒有日期的文章
-            # links.append(full_url)
-            # processed_hrefs.add(href)
-            pass
+        # 沒有日期的文章將被略過，不加入 links（避免抓取缺乏時間資訊的內容）
+        # 如果未來需要包含沒有日期的文章，可以取消下面的註解：
+        # if not date_found and href not in processed_hrefs:
+        #     links.append(full_url)
+        #     processed_hrefs.add(href)
 
     return links
 

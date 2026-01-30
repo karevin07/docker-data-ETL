@@ -126,3 +126,10 @@ data/processed/*
 # ================================
 Thumbs.db
 Desktop.ini
+
+# ================================
+# Notebooks
+# ================================
+# Ignore all notebooks except query.ipynb
+notebooks/*
+!notebooks/query.ipynb
