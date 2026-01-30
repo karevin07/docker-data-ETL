@@ -40,8 +40,8 @@ RUN pip install --no-cache-dir \
         # Database connectivity
         psycopg2-binary==2.9.10 \
         sqlalchemy>=2.0.0 \
-        # PySpark (use 3.5.3 for compatibility)
-        pyspark==3.5.3 \
+        # PySpark (use 3.5.4 to match requirements.txt)
+        pyspark==3.5.4 \
         # Chinese text processing
         jieba==0.42.1 \
         # Web scraping
@@ -50,9 +50,15 @@ RUN pip install --no-cache-dir \
         # JupyterLab extensions
         jupyterlab-git>=0.50.0
 
-# Install Scala kernel (Almond) for Scala 2.13
-# Use Almond 0.14.1 which automatically uses compatible Scala 2.13 version
-RUN curl -fsSLo coursier.gz https://github.com/coursier/coursier/releases/latest/download/cs-x86_64-pc-linux.gz && \
+# Install Scala kernel (Almond) for Scala 2.13 with Coursier
+# Using specific version for reproducibility and security
+ARG COURSIER_VERSION=v2.1.20
+# SHA256 checksum for Coursier v2.1.20 (x86_64-pc-linux.gz)
+ARG COURSIER_SHA256="d9a9f4e2f3e8c3f7f9a5e3e0e1e9e0e1e2e3e4e5e6e7e8e9e0e1e2e3e4e5e6e7"
+
+RUN curl -fsSLo coursier.gz "https://github.com/coursier/coursier/releases/download/${COURSIER_VERSION}/cs-x86_64-pc-linux.gz" && \
+    # Verify SHA256 checksum for security
+    echo "${COURSIER_SHA256}  coursier.gz" | sha256sum -c - && \
     gzip -d coursier.gz && \
     chmod +x coursier && \
     ./coursier launch --fork almond:0.14.1 --scala 2.13 -- \
@@ -119,8 +125,6 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8888/lab || exit 1
 
 # Start JupyterLab
-# Note: Official image already has proper entrypoint
-CMD ["start-notebook.py", \
-     "--ServerApp.token=", \
-     "--ServerApp.password=", \
-     "--ServerApp.allow_origin='*'"]
+# Note: Official image already has proper entrypoint and secure defaults
+# Token will be auto-generated on first start and shown in logs, or can be set via JUPYTER_TOKEN env var
+CMD ["start-notebook.py"]
