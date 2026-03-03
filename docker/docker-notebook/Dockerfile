@@ -55,7 +55,7 @@ RUN --mount=type=cache,target=/home/jovyan/.cache/uv,sharing=locked,uid=1000,gid
         # Database connectivity
         psycopg2-binary==2.9.10 \
         "sqlalchemy>=2.0.0" \
-        # PySpark (use 3.5.4 to match requirements.txt)
+        # PySpark (use 3.5.4 to match pyproject.toml/uv.lock)
         pyspark==3.5.4 \
         # Chinese text processing
         jieba==0.42.1 \
