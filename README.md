@@ -199,6 +199,13 @@ flowchart TD
 - **Load**: Spark job writes processed data to PostgreSQL database
 
 
+## Observability MCP Server
+
+[`mcp_server/`](mcp_server/) is an MCP server that lets an agent answer
+*"why didn't this table update today?"* by tracing a stale warehouse table
+back through its lineage to the failed DAG run and log line that explain it.
+Five read-only tools (`list_dags`, `get_recent_runs`, `get_task_failures`,
+`get_table_schema`, `get_lineage`). See [`mcp_server/README.md`](mcp_server/README.md).
 
 
 ## References

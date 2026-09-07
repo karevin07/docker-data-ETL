@@ -132,8 +132,25 @@ Key settings:
 │   └── docker-postgres/
 ├── data/                   # Shared data volume
 ├── notebooks/              # JupyterLab notebooks
-└── logs/                   # Airflow logs
+├── logs/                   # Airflow logs
+└── mcp_server/             # Observability MCP server (see below)
 ```
+
+## Observability MCP Server (mcp_server/)
+
+Standalone MCP server (`etl-observability-mcp`, its own `pyproject.toml` +
+`uv.lock`, decoupled from the Docker image builds) that lets an agent diagnose
+a stale table. Runs on the host with the stack up.
+
+- Tools: `list_dags`, `get_recent_runs(dag_id)`, `get_task_failures(dag_id, run_id?)`,
+  `get_table_schema(table)`, `get_lineage(table)` — all read-only.
+- Reads the Airflow metadata DB (`dag`/`dag_run`/`task_instance`) on
+  `localhost:5432`, task logs under `./logs`, and `mcp_server/lineage.yaml`.
+- `mcp_server/lineage.yaml` is hand-maintained: add an entry when a new
+  warehouse table appears; task ids must be fully qualified
+  (`<taskgroup>.<task_id>`) to match `task_instance.task_id`.
+- Dev: `cd mcp_server && uv sync && uv run pytest && uv run etl-mcp`.
+- Demo: `uv run python demo/seed_failure.py` injects a failed `etl_flow` run.
 
 ## Airflow Connections Required
 

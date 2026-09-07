@@ -1,0 +1,51 @@
+# Table lineage for the docker-data-etl warehouse.
+#
+# This is the machine-readable version of a data dictionary: for every table
+# an agent might be asked about, it records which DAG/tasks write it and what
+# feeds those tasks upstream. Keep task ids fully qualified (TaskGroup id +
+# "." + task id) so they match `task_instance.task_id` in the Airflow DB.
+
+tables:
+  title:
+    database: airflow
+    schema: public
+    description: >-
+      Article titles with their link ids. Loaded from
+      data/output/output_title.csv by a Spark JDBC append.
+    produced_by:
+      dag_id: etl_flow
+      # Table is truncated/recreated by create_title_table, then appended to.
+      write_tasks:
+        - load-data.create_title_table
+        - load-data.spark-load-title-data
+    upstream:
+      - task: transformation-data.spark_job
+        produces: data/output/output_title.csv
+        note: Spark reads data/input/input.json and selects link_id + title.
+      - task: extract-data
+        produces: data/input/input.json
+        note: >-
+          Scrapes the politics section of thenewslens.com for articles from
+          the last DAY_BEFORE (7) days. An empty or oversized scrape here is
+          the usual root cause of a stale table.
+
+  content:
+    database: airflow
+    schema: public
+    description: >-
+      Per-article word counts produced by jieba Traditional-Chinese word
+      segmentation. Loaded from data/output/output_content.csv.
+    produced_by:
+      dag_id: etl_flow
+      write_tasks:
+        - load-data.create_content_table
+        - load-data.spark-load-content-data
+    upstream:
+      - task: transformation-data.spark_job
+        produces: data/output/output_content.csv
+        note: >-
+          jieba.cut with data/dict_tw.txt, then reduceByKey word count. This
+          is the memory-hungry stage; an unusually large input.json can OOM it.
+      - task: extract-data
+        produces: data/input/input.json
+        note: Same scraper as `title`; shared upstream dependency.
