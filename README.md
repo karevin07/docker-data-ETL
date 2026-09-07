@@ -46,12 +46,18 @@ flowchart TB
 
 ### Build Images
 
+Images are built with **`docker buildx bake`** (definition in
+[`docker-bake.hcl`](docker-bake.hcl)). The image chain
+(`base → spark-base → spark-master / spark-worker`, and `airflow` copies the
+Spark distribution from `spark-base`) is wired with BuildKit named contexts, so
+the build is hermetic and BuildKit resolves and parallelises the graph.
+
 Build all images:
 ```bash
-make build-all
+make build-all           # = docker buildx bake
 ```
 
-Or build specific images:
+Or build specific images (dependencies are built automatically):
 ```bash
 make build-base          # Base Python image
 make build-spark-base    # Spark base image
@@ -60,6 +66,9 @@ make build-spark-worker  # Spark workers
 make build-airflow       # Airflow
 make build-notebook      # JupyterLab
 make build-postgres      # PostgreSQL
+
+docker buildx bake spark          # the spark-master + spark-worker group
+docker buildx bake --print        # show the resolved build plan
 ```
 
 ### Fetch Spark JARs

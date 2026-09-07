@@ -13,8 +13,10 @@
 #   First build: ~1-2 minutes (Spark copied from spark-base, no download!)
 #   Rebuild: ~20-30 seconds (with cache) ⚡⚡⚡
 # =============================================================================
-# IMPORTANT: Requires data-etl-spark-base to be built first!
-#   Run: make build-base && make build-spark-base
+# IMPORTANT: pulls the Spark distribution from data-etl-spark-base.
+#   Preferred:  docker buildx bake airflow   (builds base + spark-base first)
+#   or:         make build-airflow
+#   Plain `docker build` needs data-etl-spark-base:latest to exist already.
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -102,8 +104,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         netcat-openbsd
 
 # Copy Spark from data-etl-spark-base (no re-download needed!)
-# This avoids downloading Spark again (~400MB saved)
-COPY --from=data-etl-spark-base:latest /usr/bin/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark
+# This avoids downloading Spark again (~400MB saved).
+# "data-etl-spark-base" resolves to the local image, or to the "spark-base"
+# bake target when built via docker-bake.hcl (named build context).
+COPY --from=data-etl-spark-base /usr/bin/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark
 
 # Copy Python packages from builder
 COPY --from=airflow_builder /home/airflow/.local /home/airflow/.local

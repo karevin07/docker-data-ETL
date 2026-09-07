@@ -8,7 +8,9 @@
 # - Optimized for distributed data processing
 # =============================================================================
 
-FROM data-etl-base:latest
+# "data-etl-base" resolves to the local data-etl-base:latest image, or to the
+# "base" bake target when built via docker-bake.hcl (named build context).
+FROM data-etl-base
 
 # Metadata labels
 LABEL org.opencontainers.image.title="Data ETL Spark Base Image" \
@@ -40,32 +42,40 @@ ENV PATH="${SPARK_HOME}/bin:${SPARK_HOME}/sbin:${PATH}"
 
 WORKDIR /tmp
 
-# Download and install Apache Spark with checksum verification
-# Using BuildKit cache mount to cache downloaded Spark archive across builds
+# Spark download mirror. downloads.apache.org (CDN, currently-supported releases)
+# is fast; archive.apache.org keeps every release but heavily rate-limits and
+# Apache asks that it not be used for automated builds - so it is only the
+# fallback. Override with --build-arg / bake for an internal mirror.
+ARG SPARK_MIRRORS="https://downloads.apache.org/spark https://archive.apache.org/dist/spark"
+
+# Download and install Apache Spark with checksum verification.
+# The tarball is cached across builds via the cache mount; the cached copy is
+# re-validated against SPARK_SHA512 every build, so a truncated/stale download
+# is re-fetched (and a fresh download lands atomically via a .part rename).
 RUN --mount=type=cache,target=/tmp/downloads,sharing=locked \
-    # Download Spark only if not in cache
-    if [ ! -f "/tmp/downloads/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" ]; then \
-        curl -fsSL "https://archive.apache.org/dist/spark/spark-${SPARK_VERSION}/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" \
-        -o "/tmp/downloads/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz"; \
+    SPARK_TGZ="spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" && \
+    CACHED="/tmp/downloads/${SPARK_TGZ}" && \
+    if ! echo "${SPARK_SHA512}  ${CACHED}" | sha512sum -c - >/dev/null 2>&1; then \
+        rm -f "${CACHED}" && \
+        for base in ${SPARK_MIRRORS}; do \
+            echo "Fetching ${base}/spark-${SPARK_VERSION}/${SPARK_TGZ}" && \
+            curl -fSL --retry 3 --retry-delay 2 \
+                "${base}/spark-${SPARK_VERSION}/${SPARK_TGZ}" -o "${CACHED}.part" && \
+            mv "${CACHED}.part" "${CACHED}" && break; \
+        done; \
     fi && \
-    # Copy from cache to working directory
-    cp "/tmp/downloads/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}.tgz" spark.tgz && \
     # Verify SHA512 checksum for security (protects against supply chain attacks)
-    echo "${SPARK_SHA512}  spark.tgz" | sha512sum -c - && \
-    # Extract Spark
-    tar -xzf spark.tgz && \
-    # Move to final location
-    mv "spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}" /usr/bin/ && \
-    # Create log directory
+    echo "${SPARK_SHA512}  ${CACHED}" | sha512sum -c - && \
+    # Extract to the final location
+    tar -xzf "${CACHED}" -C /tmp && \
+    mv "/tmp/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION}" /usr/bin/ && \
     mkdir -p "${SPARK_HOME}/logs" && \
-    # Create aliases for convenience
-    echo "alias pyspark='${SPARK_HOME}/bin/pyspark'" >> /etc/bash.bashrc && \
-    echo "alias spark-shell='${SPARK_HOME}/bin/spark-shell'" >> /etc/bash.bashrc && \
-    echo "alias spark-submit='${SPARK_HOME}/bin/spark-submit'" >> /etc/bash.bashrc && \
-    # Set proper permissions
-    chown -R etluser:etluser "${SPARK_HOME}" && \
-    # Cleanup working directory (cache is preserved)
-    rm -f /tmp/spark.tgz
+    # Convenience aliases for interactive shells
+    printf "%s\n" \
+        "alias pyspark='${SPARK_HOME}/bin/pyspark'" \
+        "alias spark-shell='${SPARK_HOME}/bin/spark-shell'" \
+        "alias spark-submit='${SPARK_HOME}/bin/spark-submit'" >> /etc/bash.bashrc && \
+    chown -R etluser:etluser "${SPARK_HOME}"
 
 # Copy Spark configuration template (if exists)
 # COPY spark-defaults.conf ${SPARK_HOME}/conf/spark-defaults.conf
@@ -85,8 +95,5 @@ USER etluser
 # Verify Spark installation
 RUN spark-submit --version
 
-# Health check for Spark installation
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD spark-submit --version > /dev/null 2>&1 || exit 1
-
+# No HEALTHCHECK: intermediate image. spark-master / spark-worker define their own.
 CMD ["bash"]

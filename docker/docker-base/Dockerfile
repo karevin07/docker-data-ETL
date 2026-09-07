@@ -140,8 +140,6 @@ RUN python --version && \
     pip --version && \
     java -version
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import sys; sys.exit(0)" || exit 1
-
+# No HEALTHCHECK: this is a base image, not a long-running service. The images
+# that run as services (spark-master, spark-worker, ...) define their own.
 CMD ["bash"]

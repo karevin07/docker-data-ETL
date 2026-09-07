@@ -1,8 +1,0 @@
-# Base image specific ignores
-*.md
-Dockerfile
-Dockerfile.*
-.dockerignore
-
-# Keep only necessary files
-# Include: pyproject.toml, requirements.txt

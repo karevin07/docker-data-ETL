@@ -66,9 +66,14 @@ Beyond speed, the optimization effort brought significant improvements to build 
 #### 1. docker-base & docker-spark-base
 *   **Action**: Implemented BuildKit `cache mount` for `apt`, `pip`, `uv` cache, and downloads.
 *   **Action**: Replaced Poetry with `uv` for 10-100x faster dependency installation.
-*   **Action**: Corrected SHA256/SHA512 checksums for secure verification.
+*   **Action**: SHA512 checksum verification for the Spark tarball; the cached
+    copy is re-validated every build so a truncated download self-heals.
+*   **Action**: Spark downloads from `downloads.apache.org` (CDN) first, with
+    `archive.apache.org` as fallback only.
 *   **Action**: Multi-stage builds for minimal runtime images.
 *   **Action**: Used `uv.lock` for reproducible builds across environments.
+*   **Action**: `FROM data-etl-base` wired as a bake named context (no `:latest`).
+*   **Action**: Dropped `HEALTHCHECK` from these intermediate (non-service) images.
 *   **Result**: 90% reduction in rebuild times.
 
 #### 2. docker-spark-master & docker-spark-worker
@@ -101,12 +106,34 @@ Beyond speed, the optimization effort brought significant improvements to build 
 
 ## 4. Usage Guide
 
+### Build orchestration: `docker buildx bake`
+
+Image builds are wired together in [`docker-bake.hcl`](../docker-bake.hcl).
+The chain `base → spark-base → {spark-master, spark-worker}` plus `airflow`
+(copies the Spark distribution from `spark-base`) is expressed with BuildKit
+**named contexts** (`contexts = { data-etl-base = "target:base" }`) instead of
+`FROM data-etl-base:latest`. Benefits over the previous per-image
+`docker build` + `:latest` chaining:
+
+- Hermetic: any target builds its dependencies from source, no stale `:latest`.
+- BuildKit resolves and parallelises the whole graph (no hand-written `make -j`).
+- Versions (Spark / PySpark / Airflow / uv) are set once as bake variables.
+
+The per-directory `docker/docker-*/.dockerignore` files were removed - Docker
+only honours the context-root `.dockerignore`, so those were dead files.
+
+```bash
+make build-all                 # = docker buildx bake
+docker buildx bake airflow     # one target + its deps
+docker buildx bake --print     # resolved plan, builds nothing
+```
+
 ### Prerequisites
-**BuildKit** must be enabled.
+**BuildKit** is enabled by default (`docker buildx`).
 
 **Method 1: Command Line (Recommended)**
 ```bash
-DOCKER_BUILDKIT=1 make build-all
+make build-all
 ```
 
 **Method 2: Daemon Configuration**

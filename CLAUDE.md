@@ -20,12 +20,18 @@ All components run in Docker containers and communicate through a shared network
 
 ### Building Images
 
+Images build via `docker buildx bake` (graph defined in `docker-bake.hcl`). The
+chain `base → spark-base → {spark-master, spark-worker}` plus `airflow`
+(which `COPY --from`s the Spark distribution out of `spark-base`) is wired with
+BuildKit named contexts (`contexts = { data-etl-base = "target:base" }`), not
+`FROM ...:latest`, so any target builds its dependencies hermetically.
+
 Build all images:
 ```bash
-make build-all
+make build-all          # = docker buildx bake
 ```
 
-Build individual images:
+Build individual images (deps built automatically):
 ```bash
 make build-base          # Base Python image
 make build-spark-base    # Spark base image
@@ -36,10 +42,21 @@ make build-notebook      # JupyterLab
 make build-postgres      # PostgreSQL with init scripts
 ```
 
-Alternative build method for individual components:
+Directly:
 ```bash
-bash build.sh {component_name}  # e.g., bash build.sh airflow
+docker buildx bake [target]      # e.g. docker buildx bake airflow
+bash build.sh [target]           # thin wrapper around the same
+docker buildx bake --print       # resolved plan, builds nothing
 ```
+
+Version numbers (Spark, PySpark, Airflow, uv) are set once as variables in
+`docker-bake.hcl` and passed as build args; the Dockerfiles keep matching `ARG`
+defaults for a plain `docker build`. Bumping `SPARK_VERSION` also requires
+updating `SPARK_SHA512` in `docker/docker-spark-base/Dockerfile`.
+
+`data-etl-base` / `data-etl-spark-base` are intermediate images: a full
+`make build-all` materialises them, but building a single downstream target
+may keep them as build cache only.
 
 ### Running Services
 

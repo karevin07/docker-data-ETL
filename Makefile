@@ -7,18 +7,20 @@
 
 # Project configuration
 IMAGE_NAME := data-etl
-DOCKER_FILE_DIR := docker
-DOCKER_FILE_NAME := Dockerfile
 DOCKER_COMPOSE_FILE := docker-compose.yml
 
 # Build configuration
 VERSION ?= latest
 IMAGE_TAG ?= $(VERSION)
-DOCKER_BUILD_FLAGS ?=
 DOCKER_PROGRESS ?= auto
+BAKE_FLAGS ?=
 
 # Enable Docker BuildKit for faster builds with cache mount
 export DOCKER_BUILDKIT=1
+
+# All image builds go through docker buildx bake (see docker-bake.hcl), which
+# resolves the base -> spark-base -> {spark-*, airflow} graph hermetically.
+BAKE = TAG=$(IMAGE_TAG) docker buildx bake -f docker-bake.hcl --progress=$(DOCKER_PROGRESS) $(BAKE_FLAGS)
 
 # Default target
 .DEFAULT_GOAL := help
@@ -27,78 +29,34 @@ export DOCKER_BUILDKIT=1
 # Build Images
 # =============================================================================
 
-.PHONY: build-all build-all-parallel build-base build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres
+.PHONY: build build-all build-all-parallel build-base build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres
 
-build-all: build-base build-spark-base build-spark-master build-spark-worker build-airflow build-notebook build-postgres ## build all images (sequential)
+build-all: ## build all images (bake resolves the graph and parallelises)
+	@$(BAKE)
 
-build-all-parallel: build-base ## build all images in parallel (faster, requires make -j)
-	@echo "Building independent images in parallel..."
-	@$(MAKE) -j3 build-notebook build-postgres build-spark-base
-	@echo "Building dependent images..."
-	@$(MAKE) -j3 build-spark-master build-spark-worker build-airflow
+build: build-all
+build-all-parallel: build-all ## alias for build-all (bake is already parallel)
 
 build-base: ## build base Python image
-	@echo "Building base image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-base:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-base/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-base:$(IMAGE_TAG) $(IMAGE_NAME)-base:latest; \
-	fi
+	@$(BAKE) base
 
-build-spark-base: build-base ## build Spark base image (requires base)
-	@echo "Building Spark base image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-spark-base:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-spark-base/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-spark-base:$(IMAGE_TAG) $(IMAGE_NAME)-spark-base:latest; \
-	fi
+build-spark-base: ## build Spark base image
+	@$(BAKE) spark-base
 
-build-spark-master: build-spark-base ## build Spark master image (requires spark-base)
-	@echo "Building Spark master image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-spark-master:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-spark-master/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-spark-master:$(IMAGE_TAG) $(IMAGE_NAME)-spark-master:latest; \
-	fi
+build-spark-master: ## build Spark master image
+	@$(BAKE) spark-master
 
-build-spark-worker: build-spark-base ## build Spark worker image (requires spark-base)
-	@echo "Building Spark worker image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-spark-worker:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-spark-worker/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-spark-worker:$(IMAGE_TAG) $(IMAGE_NAME)-spark-worker:latest; \
-	fi
+build-spark-worker: ## build Spark worker image
+	@$(BAKE) spark-worker
 
-build-airflow: build-spark-base ## build Airflow image (requires spark-base)
-	@echo "Building Airflow image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-airflow:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-airflow/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-airflow:$(IMAGE_TAG) $(IMAGE_NAME)-airflow:latest; \
-	fi
+build-airflow: ## build Airflow image
+	@$(BAKE) airflow
 
 build-notebook: ## build JupyterLab notebook image
-	@echo "Building JupyterLab notebook image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-notebook:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-notebook/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-notebook:$(IMAGE_TAG) $(IMAGE_NAME)-notebook:latest; \
-	fi
+	@$(BAKE) notebook
 
 build-postgres: ## build PostgreSQL database image
-	@echo "Building PostgreSQL image..."
-	@docker build $(DOCKER_BUILD_FLAGS) --progress=$(DOCKER_PROGRESS) \
-		-t $(IMAGE_NAME)-postgres:$(IMAGE_TAG) \
-		-f $(DOCKER_FILE_DIR)/docker-postgres/$(DOCKER_FILE_NAME) .
-	@if [ "$(IMAGE_TAG)" != "latest" ]; then \
-		docker tag $(IMAGE_NAME)-postgres:$(IMAGE_TAG) $(IMAGE_NAME)-postgres:latest; \
-	fi
+	@$(BAKE) postgres
 
 # =============================================================================
 # Rebuild Optimization
@@ -106,16 +64,14 @@ build-postgres: ## build PostgreSQL database image
 
 .PHONY: rebuild-airflow rebuild-notebook rebuild-spark-images
 
-rebuild-airflow: ## rebuild only Airflow (faster if base unchanged)
-	@docker build --progress=$(DOCKER_PROGRESS) -t $(IMAGE_NAME)-airflow \
-		-f $(DOCKER_FILE_DIR)/docker-airflow/$(DOCKER_FILE_NAME) .
+rebuild-airflow: ## force-rebuild Airflow only (deps stay cached)
+	@$(BAKE) --set 'airflow.no-cache=true' airflow
 
-rebuild-notebook: ## rebuild only JupyterLab (faster if base unchanged)
-	@docker build --progress=$(DOCKER_PROGRESS) -t $(IMAGE_NAME)-notebook \
-		-f $(DOCKER_FILE_DIR)/docker-notebook/$(DOCKER_FILE_NAME) .
+rebuild-notebook: ## force-rebuild JupyterLab only (deps stay cached)
+	@$(BAKE) --set 'notebook.no-cache=true' notebook
 
-rebuild-spark-images: ## rebuild Spark master and workers only
-	@$(MAKE) build-spark-master build-spark-worker
+rebuild-spark-images: ## force-rebuild Spark master + workers only
+	@$(BAKE) --set 'spark-master.no-cache=true' --set 'spark-worker.no-cache=true' spark
 
 # =============================================================================
 # Start Services

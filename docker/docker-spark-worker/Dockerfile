@@ -5,7 +5,9 @@
 # This Dockerfile creates Spark worker nodes for distributed processing
 # =============================================================================
 
-FROM data-etl-spark-base:latest
+# "data-etl-spark-base" resolves to the local image, or to the "spark-base"
+# bake target when built via docker-bake.hcl (named build context).
+FROM data-etl-spark-base
 
 # Metadata labels
 LABEL org.opencontainers.image.title="Data ETL Spark Worker" \

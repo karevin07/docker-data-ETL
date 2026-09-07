@@ -1,14 +1,13 @@
-#!/bin/bash
-NAME=$1
-IMAGE_NAME="data-etl"
-DOCKER_FILE_DIR="docker"
+#!/usr/bin/env bash
+# Thin wrapper around `docker buildx bake` (see docker-bake.hcl).
+# Prefer calling bake directly:  docker buildx bake <target>
+#
+# Usage:
+#   bash build.sh                 # build every image
+#   bash build.sh airflow         # build one target (+ its deps)
+#   bash build.sh spark           # build the "spark" group
+set -euo pipefail
 
+cd "$(dirname "$0")"
 
-build() {
-    TAG=data-etl-${NAME}
-    echo ${TAG}
-    docker build -t ${TAG} -f ${DOCKER_FILE_DIR}/docker-${NAME}/Dockerfile .
-    echo "docker build -t ${TAG} -f ${DOCKER_FILE_DIR}/docker-${NAME}/Dockerfile ."
-}
-
-build
+exec docker buildx bake -f docker-bake.hcl "$@"
