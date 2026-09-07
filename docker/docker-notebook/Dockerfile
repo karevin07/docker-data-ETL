@@ -3,8 +3,8 @@
 # JupyterLab Image for Docker Data ETL Platform (Ultra-Fast Build)
 # =============================================================================
 # This Dockerfile creates a JupyterLab development environment:
-# - JupyterLab 4.x (using official image)
-# - Python 3.12 with data science libraries
+# - JupyterLab 4.x (jupyter/base-notebook, no heavy scipy stack)
+# - Python 3.12 + pandas/matplotlib for analysis notebooks
 # - Spark integration
 # - Scala kernel (Almond)
 # - uv for package management (10-100x faster than pip!)
@@ -18,7 +18,7 @@
 # -----------------------------------------------------------------------------
 # Stage 1: Builder - Install additional packages
 # -----------------------------------------------------------------------------
-FROM quay.io/jupyter/scipy-notebook:python-3.12 AS jupyter_builder
+FROM quay.io/jupyter/base-notebook:python-3.12 AS jupyter_builder
 
 # Build arguments
 ARG UV_VERSION=0.12.10
@@ -35,8 +35,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         # Java for Spark
         openjdk-17-jre-headless \
         # Utilities
-        vim \
-        less \
         tree \
         git
 
@@ -52,6 +50,9 @@ RUN --mount=type=cache,target=/home/jovyan/.cache/pip,sharing=locked,uid=1000,gi
 # Jupyter uses conda environment, so we specify --python explicitly
 RUN --mount=type=cache,target=/home/jovyan/.cache/uv,sharing=locked,uid=1000,gid=100 \
     uv pip install --python $(which python) \
+        # Analysis stack (base-notebook does not ship these)
+        "pandas>=2.2.0,<3.0.0" \
+        "matplotlib>=3.8.0" \
         # Database connectivity
         psycopg2-binary==2.9.10 \
         "sqlalchemy>=2.0.0" \
@@ -96,7 +97,7 @@ RUN --mount=type=cache,target=/tmp/coursier_cache,sharing=locked,uid=1000,gid=10
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime - Final production image
 # -----------------------------------------------------------------------------
-FROM quay.io/jupyter/scipy-notebook:python-3.12
+FROM quay.io/jupyter/base-notebook:python-3.12
 
 # Metadata labels
 LABEL org.opencontainers.image.title="Data ETL JupyterLab (Fast)" \
@@ -118,8 +119,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         openjdk-17-jre-headless \
-        vim \
-        less \
         tree \
         git
 
