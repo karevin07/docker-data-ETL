@@ -109,10 +109,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
 # This avoids downloading Spark again (~400MB saved).
 # "data-etl-spark-base" resolves to the local image, or to the "spark-base"
 # bake target when built via docker-bake.hcl (named build context).
-COPY --from=data-etl-spark-base /usr/bin/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark
+# --chown here so a later `chown -R` does not duplicate the whole Spark dir.
+COPY --chown=airflow:root --from=data-etl-spark-base /usr/bin/spark-${SPARK_VERSION}-bin-hadoop${HADOOP_VERSION} /usr/local/spark
 
 # Copy Python packages from builder
-COPY --from=airflow_builder /home/airflow/.local /home/airflow/.local
+COPY --chown=airflow:root --from=airflow_builder /home/airflow/.local /home/airflow/.local
 
 # Environment variables
 ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME} \
@@ -129,13 +130,15 @@ ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME} \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8
 
-# Create Airflow directories (official image already has airflow user)
+# Create Airflow directories (official image already has airflow user).
+# /usr/local/spark is already airflow-owned via COPY --chown above, so it is
+# deliberately left out here - a recursive chown/chmod would duplicate it.
 RUN mkdir -p \
         ${AIRFLOW_USER_HOME}/dags \
         ${AIRFLOW_USER_HOME}/logs \
         ${AIRFLOW_USER_HOME}/plugins && \
-    chown -R airflow:root ${AIRFLOW_USER_HOME} /usr/local/spark && \
-    chmod -R g+rw ${AIRFLOW_USER_HOME} /usr/local/spark
+    chown -R airflow:root ${AIRFLOW_USER_HOME} && \
+    chmod -R g+rw ${AIRFLOW_USER_HOME}
 
 # Copy entrypoint script and configuration
 COPY --chown=airflow:root docker/docker-airflow/scripts/entrypoint.sh /entrypoint.sh

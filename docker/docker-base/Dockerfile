@@ -69,7 +69,11 @@ RUN --mount=type=cache,target=/tmp/uv_cache,sharing=locked \
     uv venv /app/.venv && \
     # Sync all dependencies from lock file (fastest and most reliable)
     # --no-install-project: only install dependencies, not the project itself
-    uv sync --frozen --no-dev --no-install-project
+    uv sync --frozen --no-dev --no-install-project && \
+    # Drop PySpark's bundled JARs (~320MB). This image is only ever the base for
+    # data-etl-spark-base, which sets SPARK_HOME to a standalone Spark
+    # distribution - PySpark loads its JARs from there, not from the wheel.
+    rm -rf /app/.venv/lib/python*/site-packages/pyspark/jars
 
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime - Minimal production image
@@ -121,14 +125,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     # Point the arch-independent JAVA_HOME at the actual JDK dir (…-amd64 / …-arm64)
     ln -sfn "$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" "${JAVA_HOME}"
 
-# Copy virtual environment (uv not needed in runtime, only the venv)
-COPY --from=builder /app/.venv /app/.venv
-
-# Create non-root user and group
+# Create non-root user and group first, so the venv can be COPYed in already
+# owned by it - a later `chown -R /app` would duplicate the whole venv layer.
 RUN groupadd -g ${APP_GID} ${APP_USER} && \
     useradd -u ${APP_UID} -g ${APP_GID} -m -s /bin/bash ${APP_USER} && \
     mkdir -p ${WORKSPACE} && \
-    chown -R ${APP_USER}:${APP_USER} ${WORKSPACE} /app
+    chown ${APP_USER}:${APP_USER} ${WORKSPACE}
+
+# Copy virtual environment (uv not needed in runtime, only the venv)
+COPY --chown=${APP_UID}:${APP_GID} --from=builder /app/.venv /app/.venv
 
 # Add virtual environment to PATH
 ENV PATH="/app/.venv/bin:${PATH}"
