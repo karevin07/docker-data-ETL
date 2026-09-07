@@ -123,9 +123,9 @@ WORKDIR ${WORKSPACE}
 # Expose JupyterLab and Spark UI ports
 EXPOSE 8888 4040
 
-# Health check for JupyterLab
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD curl -f http://localhost:8888/lab || exit 1
+# Health check: inherit the base image's /etc/jupyter/docker_healthcheck.py
+# (a Python check that handles the token and TLS). base-notebook has no curl,
+# so do not override it with a curl-based HEALTHCHECK.
 
 # Start JupyterLab
 # Note: Official image already has proper entrypoint and secure defaults
