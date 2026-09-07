@@ -3,7 +3,7 @@
 # PostgreSQL Database Image for Docker Data ETL Platform (Optimized Build)
 # =============================================================================
 # This Dockerfile creates a PostgreSQL database with:
-# - PostgreSQL 16.6 (latest stable version 16.x)
+# - PostgreSQL 16.15 (latest stable version 16.x)
 # - Custom initialization scripts
 # - Optimized configuration for ETL workloads
 # - BuildKit cache mounts for faster rebuilds
@@ -14,7 +14,7 @@
 # =============================================================================
 # ⚠️  CRITICAL MIGRATION WARNING (READ BEFORE UPGRADING) ⚠️
 # =============================================================================
-# This image represents a MAJOR VERSION UPGRADE from PostgreSQL 9.6 to 16.6.
+# This image represents a MAJOR VERSION UPGRADE from PostgreSQL 9.6 to 16.x.
 # PostgreSQL does NOT support in-place upgrades across these versions.
 #
 # ❌ DANGER: If you have an existing Docker volume (e.g., "postgres_data") with
@@ -42,7 +42,7 @@
 #         docker volume rm data-etl-postgres-data
 #         # OR: docker volume rename data-etl-postgres-data postgres-data-old
 #
-# Step 5: Start NEW container with this 16.6 image (creates fresh volume)
+# Step 5: Start NEW container with this 16.x image (creates fresh volume)
 #         docker-compose up -d postgres
 #
 # Step 6: Restore data into the new instance
@@ -58,12 +58,12 @@
 # For more information, see: docs/POSTGRESQL_MIGRATION.md
 # =============================================================================
 
-FROM postgres:16.6-alpine
+FROM postgres:16.15-alpine
 
 # Metadata labels
 LABEL org.opencontainers.image.title="Data ETL PostgreSQL" \
       org.opencontainers.image.description="PostgreSQL database for Airflow and ETL data storage" \
-      org.opencontainers.image.version="16.6" \
+      org.opencontainers.image.version="16.15" \
       org.opencontainers.image.authors="Kelvin Liao" \
       maintainer="Kelvin Liao"
 

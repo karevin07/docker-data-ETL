@@ -21,7 +21,7 @@
 FROM quay.io/jupyter/scipy-notebook:python-3.12 AS jupyter_builder
 
 # Build arguments
-ARG UV_VERSION=0.5.21
+ARG UV_VERSION=0.12.10
 
 # Switch to root for installation
 USER root
@@ -55,8 +55,8 @@ RUN --mount=type=cache,target=/home/jovyan/.cache/uv,sharing=locked,uid=1000,gid
         # Database connectivity
         psycopg2-binary==2.9.10 \
         "sqlalchemy>=2.0.0" \
-        # PySpark (use 3.5.4 to match pyproject.toml/uv.lock)
-        pyspark==3.5.4 \
+        # PySpark (match pyproject.toml/uv.lock and Airflow constraints)
+        pyspark==3.5.3 \
         # Chinese text processing
         jieba==0.42.1 \
         # Web scraping

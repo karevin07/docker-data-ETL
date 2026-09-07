@@ -3,7 +3,7 @@
 # Spark Base Image for Docker Data ETL Platform
 # =============================================================================
 # This Dockerfile creates a Spark base image built on the data-etl-base image
-# - Apache Spark 4.1.1 (latest stable with Hadoop 3)
+# - Apache Spark 4.1.3 (latest stable with Hadoop 3)
 # - Compatible with Python 3.12 and Scala 2.13
 # - Optimized for distributed data processing
 # =============================================================================
@@ -18,12 +18,12 @@ LABEL org.opencontainers.image.title="Data ETL Spark Base Image" \
       maintainer="Kelvin Liao"
 
 # Build arguments
-ARG SPARK_VERSION=4.1.1
+ARG SPARK_VERSION=4.1.3
 ARG HADOOP_VERSION=3
 ARG WORKSPACE=/home/workspace
-# SHA512 checksum for Spark 4.1.1 with Hadoop 3
-# Verify at: https://archive.apache.org/dist/spark/spark-4.1.1/spark-4.1.1-bin-hadoop3.tgz.sha512
-ARG SPARK_SHA512="9f39e588e7d4c70ec0126109679f386eb9bfa26979dc42669fe4f3e3446a082dca8ffbf5e8dbe8ad411cf2ce5bf803ce670341620bf52d968067acf86626106e"
+# SHA512 checksum for Spark 4.1.3 with Hadoop 3
+# Verify at: https://archive.apache.org/dist/spark/spark-4.1.3/spark-4.1.3-bin-hadoop3.tgz.sha512
+ARG SPARK_SHA512="391d04f40da0f6e961513d1ad72a6e3d51aef99f751c835e058a329b01369d83d17c2a9c68fad6be9496eea6687107d0d3d6893f7a53f53ddbfe669022220523"
 
 # Switch to root for installation
 USER root

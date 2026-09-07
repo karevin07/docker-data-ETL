@@ -19,7 +19,7 @@ FROM python:3.12.12-slim-bookworm AS builder
 
 # Build arguments for version management
 ARG SCALA_VERSION=2.13.18
-ARG UV_VERSION=0.5.21
+ARG UV_VERSION=0.12.10
 # SHA256 checksum for Scala 2.13.18
 # Verify at: https://github.com/scala/scala/releases/download/v2.13.18/scala-2.13.18.tgz
 ARG SCALA_SHA256="1834d09fd5c78ec77e9a933ab76c724280a8ec9595a332a6112823787a9ac3e6"
@@ -138,7 +138,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         curl \
         wget \
         git \
-        supervisor \
         # Snappy for Spark
         libsnappy1v5 \
         # Locale

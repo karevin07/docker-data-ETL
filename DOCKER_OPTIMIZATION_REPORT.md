@@ -22,7 +22,7 @@ This document serves as a comprehensive guide and analysis of the Docker build o
 | **docker-spark-worker** | data-etl-spark-base | ✅ Optimized | ~10-20 sec | ~5-10 sec |
 | **docker-airflow** | apache/airflow:2.10.4 | ✅ Optimized | ~1-2 min | ~20-30 sec |
 | **docker-notebook** | jupyter/scipy-notebook | ✅ Optimized | ~1-2 min | ~30 sec |
-| **docker-postgres** | postgres:16.6-alpine | ✅ Optimized | ~30-60 sec | ~10-20 sec |
+| **docker-postgres** | postgres:16.15-alpine | ✅ Optimized | ~30-60 sec | ~10-20 sec |
 
 **Status: 7/7 images optimized (100% complete)** 🎉
 

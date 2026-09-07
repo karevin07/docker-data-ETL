@@ -18,7 +18,7 @@ dependencies = [
     "requests==2.32.3",
     "beautifulsoup4==4.12.3",
     "lxml==6.1.0",
-    "pyspark==3.5.4",  # Compatible with Spark 4.1.1 (PySpark 4.x not yet stable)
+    "pyspark==3.5.3",  # Pinned to match Airflow 2.10.4 constraints (constraints-3.12.txt); cluster runs Spark 4.1.3 via spark-submit
     "pandas>=2.2.0,<3.0.0",
     "numpy>=2.1.0,<3.0.0",
     "psycopg2-binary==2.9.10",

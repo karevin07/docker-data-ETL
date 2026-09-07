@@ -4,7 +4,7 @@
 # =============================================================================
 # This Dockerfile creates an Airflow image with:
 # - Apache Airflow 2.10.4 (using official image)
-# - Apache Spark 4.1.1 (copied from data-etl-spark-base, no re-download!)
+# - Apache Spark 4.1.3 (copied from data-etl-spark-base, no re-download!)
 # - PostgreSQL support
 # - uv for package management (10-100x faster than pip!)
 # - BuildKit cache mounts for faster rebuilds
@@ -23,10 +23,10 @@
 FROM apache/airflow:2.10.4-python3.12 AS airflow_builder
 
 # Build arguments
-ARG SPARK_VERSION=4.1.1
+ARG SPARK_VERSION=4.1.3
 ARG AIRFLOW_VERSION=2.10.4
 ARG PYSPARK_VERSION=3.5.3
-ARG UV_VERSION=0.5.21
+ARG UV_VERSION=0.12.10
 
 # Switch to root for installation
 USER root
@@ -55,15 +55,14 @@ ENV AIRFLOW_CONSTRAINTS_URL="https://raw.githubusercontent.com/apache/airflow/co
 
 # Install additional Airflow providers and dependencies using uv
 # Note: Using PySpark 3.5.3 as required by Airflow 2.10.4 constraints
-# Spark cluster runs 4.1.1 separately via SparkSubmitOperator
+# Spark cluster runs 4.1.3 separately via SparkSubmitOperator
 # Using BuildKit cache mount to cache uv packages (10-100x faster than pip!)
 # Use --python to explicitly specify the Python interpreter
+# redis/celery intentionally omitted: this deployment uses LocalExecutor
 RUN --mount=type=cache,target=/home/airflow/.cache/uv,sharing=locked,uid=50000,gid=0 \
     uv pip install --python $(which python) --constraint "${AIRFLOW_CONSTRAINTS_URL}" \
         "apache-airflow-providers-apache-spark" \
-        "pyspark==${PYSPARK_VERSION}" \
-        redis \
-        celery
+        "pyspark==${PYSPARK_VERSION}"
 
 # Copy and install DAG dependencies with uv
 COPY docker/docker-airflow/requirements.txt /tmp/dag-requirements.txt
@@ -84,7 +83,7 @@ LABEL org.opencontainers.image.title="Data ETL Airflow (Fast Build)" \
 
 # Build arguments
 ARG AIRFLOW_USER_HOME=/opt/airflow
-ARG SPARK_VERSION=4.1.1
+ARG SPARK_VERSION=4.1.3
 ARG HADOOP_VERSION=3
 
 # Switch to root for setup
@@ -100,9 +99,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         openjdk-17-jre-headless \
         # Utilities
         rsync \
-        netcat-openbsd \
-        vim \
-        less
+        netcat-openbsd
 
 # Copy Spark from data-etl-spark-base (no re-download needed!)
 # This avoids downloading Spark again (~400MB saved)
