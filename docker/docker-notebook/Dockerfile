@@ -5,8 +5,7 @@
 # This Dockerfile creates a JupyterLab development environment:
 # - JupyterLab 4.x (jupyter/base-notebook, no heavy scipy stack)
 # - Python 3.12 + pandas/matplotlib for analysis notebooks
-# - Spark integration
-# - Scala kernel (Almond)
+# - PySpark integration (Python kernel only)
 # - uv for package management (10-100x faster than pip!)
 # - BuildKit cache mounts for faster rebuilds
 # =============================================================================
@@ -66,34 +65,6 @@ RUN --mount=type=cache,target=/home/jovyan/.cache/uv,sharing=locked,uid=1000,gid
         # JupyterLab extensions
         "jupyterlab-git>=0.50.0"
 
-# Install Scala kernel (Almond) for Scala 2.13 with Coursier
-# Using specific version for reproducibility and security
-ARG COURSIER_VERSION=v2.1.20
-# SHA256 checksum for Coursier v2.1.20 (x86_64-pc-linux.gz)
-# Verified: 2026-01-30
-ARG COURSIER_SHA256="327d6d1a3c94c7a51d8bfe92036bd7361672a7c1e791aa591844d9f3220183ea"
-
-# Download and install Coursier with BuildKit cache mount
-# Add uid/gid for jovyan user (1000:100) to cache mount for write permissions
-RUN --mount=type=cache,target=/tmp/coursier_cache,sharing=locked,uid=1000,gid=100 \
-    # Download Coursier only if not in cache
-    if [ ! -f "/tmp/coursier_cache/cs-${COURSIER_VERSION}.gz" ]; then \
-        curl -fsSL "https://github.com/coursier/coursier/releases/download/${COURSIER_VERSION}/cs-x86_64-pc-linux.gz" \
-        -o "/tmp/coursier_cache/cs-${COURSIER_VERSION}.gz"; \
-    fi && \
-    # Copy from cache to working directory
-    cp "/tmp/coursier_cache/cs-${COURSIER_VERSION}.gz" coursier.gz && \
-    # Verify SHA256 checksum for security
-    echo "${COURSIER_SHA256}  coursier.gz" | sha256sum -c - && \
-    # Extract and install Scala kernel
-    gzip -d coursier.gz && \
-    chmod +x coursier && \
-    ./coursier launch --fork almond:0.14.1 --scala 2.13 -- \
-        --install \
-        --id scala \
-        --display-name "Scala 2.13" && \
-    rm -f coursier
-
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime - Final production image
 # -----------------------------------------------------------------------------
@@ -130,9 +101,9 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
 COPY --from=jupyter_builder --chown=${NB_UID}:${NB_GID} \
     /opt/conda/lib/python3.12/site-packages /opt/conda/lib/python3.12/site-packages
 
-# Copy Scala kernel (Almond) from builder
+# Copy Jupyter data dir (prebuilt lab extensions, e.g. jupyterlab-git) from builder
 COPY --from=jupyter_builder --chown=${NB_UID}:${NB_GID} \
-    /home/jovyan/.local/share/jupyter /home/jovyan/.local/share/jupyter
+    /opt/conda/share/jupyter /opt/conda/share/jupyter
 
 # Create workspace directories
 RUN mkdir -p \

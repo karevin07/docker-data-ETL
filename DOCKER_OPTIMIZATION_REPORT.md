@@ -51,7 +51,7 @@ The project implements **Solution A: BuildKit Cache Mount + Layer Optimization +
 
 Beyond speed, the optimization effort brought significant improvements to build quality and security:
 
-*   **Security**: All binary downloads (Scala, Spark, Coursier) now verified with SHA256/SHA512 checksums
+*   **Security**: All binary downloads (Spark) verified with SHA512 checksums
 *   **Reproducibility**: Python dependencies locked via `uv.lock`, ensuring consistent builds across environments
 *   **Maintainability**: Multi-stage builds separate build-time and runtime concerns
 *   **Best Practices**: Proper cache mount permissions (uid/gid) for non-root users
@@ -83,8 +83,9 @@ Beyond speed, the optimization effort brought significant improvements to build 
 *   **Result**: 80% time savings on rebuilds.
 
 #### 4. docker-notebook (JupyterLab)
-*   **Action**: Fixed Coursier SHA256 checksum (verified 2026-01-30).
-*   **Action**: Enabled BuildKit cache mounts for Coursier, apt, pip, and uv.
+*   **Action**: Switched base from `scipy-notebook` to `base-notebook`; install only pandas/matplotlib.
+*   **Action**: Dropped the Almond/Scala kernel (Python kernel only).
+*   **Action**: Enabled BuildKit cache mounts for apt, pip, and uv.
 *   **Action**: Migrated from pip to `uv` for 10-100x speedup.
 *   **Action**: Multi-stage build for optimized final image.
 *   **Action**: Proper uid/gid permissions (1000:100) for jovyan user cache mounts.
@@ -197,8 +198,8 @@ Copying Spark binaries from `spark-base` to `airflow` (via `COPY --from=data-etl
 #### 5. Checksum Verification is Non-Negotiable
 Supply chain attacks are real. Every binary download should be verified:
 ```dockerfile
-ARG SCALA_SHA256="..."
-RUN echo "${SCALA_SHA256}  scala.tgz" | sha256sum -c -
+ARG SPARK_SHA512="..."
+RUN echo "${SPARK_SHA512}  spark.tgz" | sha512sum -c -
 ```
 Document where you obtained the checksum (GitHub releases, Apache dist, etc.) for future maintainers.
 

@@ -4,7 +4,7 @@
 # =============================================================================
 # This Dockerfile creates a Spark base image built on the data-etl-base image
 # - Apache Spark 4.1.3 (latest stable with Hadoop 3)
-# - Compatible with Python 3.12 and Scala 2.13
+# - Compatible with Python 3.12 (Spark bundles its own Scala 2.13 runtime)
 # - Optimized for distributed data processing
 # =============================================================================
 
