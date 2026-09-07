@@ -89,7 +89,8 @@ The main DAG `etl_flow` runs daily and consists of three sequential stages:
 3. **Load** (SubDAG via dags/pkg/etlflow/Load.py)
    - Creates PostgreSQL tables (`title` and `content`)
    - Submits Spark jobs (spark/app/load.py) to write CSVs to PostgreSQL
-   - Uses JDBC with PostgreSQL driver from `jars/postgresql-42.3.3.jar`
+   - Uses JDBC with PostgreSQL driver from `spark/jars/postgresql-42.7.13.jar`
+     (not tracked in git; place the jar there manually before running the Load stage)
 
 ### Spark Jobs
 

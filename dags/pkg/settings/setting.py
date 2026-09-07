@@ -12,7 +12,7 @@ TRANSFORMATION_OUTPUT = 'data/output'
 TRANSFORMATION_OUTPUT_TITLE_FILE = 'output_title.csv'
 TRANSFORMATION_OUTPUT_WORD_FILE = 'output_content.csv'
 
-SPARK_EXTRA_PATH = 'jars/postgresql-42.3.3.jar'
+SPARK_EXTRA_PATH = 'jars/postgresql-42.7.13.jar'
 
 # Postgres
 POSTGRES_DB = "airflow"
