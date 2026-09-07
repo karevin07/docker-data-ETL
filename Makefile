@@ -121,13 +121,16 @@ rebuild-spark-images: ## rebuild Spark master and workers only
 # Start Services
 # =============================================================================
 
-.PHONY: start up setup-connections
+.PHONY: start up setup-connections fetch-jars
 
-start: ## start all services with automatic connection setup (recommended)
+fetch-jars: ## download third-party Spark JARs (PostgreSQL JDBC) into spark/jars/
+	@bash scripts/fetch-jars.sh
+
+start: fetch-jars ## start all services with automatic connection setup (recommended)
 	@echo "Starting all services with connection setup..."
 	@bash scripts/start.sh
 
-up: ## start all services without connection setup
+up: fetch-jars ## start all services without connection setup
 	@echo "Starting all services..."
 	@docker-compose up -d
 

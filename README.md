@@ -62,6 +62,15 @@ make build-notebook      # JupyterLab
 make build-postgres      # PostgreSQL
 ```
 
+### Fetch Spark JARs
+
+Download third-party JARs the Spark jobs need (PostgreSQL JDBC driver) into
+`spark/jars/`. Required once after cloning; `make start` / `make up` also run
+it automatically. Downloads are checksum-verified.
+```bash
+make fetch-jars
+```
+
 ### Quick Start
 
 **Option 1: Complete Setup (Recommended)**

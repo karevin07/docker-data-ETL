@@ -43,6 +43,12 @@ bash build.sh {component_name}  # e.g., bash build.sh airflow
 
 ### Running Services
 
+Download third-party Spark JARs first (once per clone / version change; `make
+start` and `make up` do this automatically):
+```bash
+make fetch-jars
+```
+
 Start all services:
 ```bash
 docker-compose up -d
@@ -90,7 +96,7 @@ The main DAG `etl_flow` runs daily and consists of three sequential stages:
    - Creates PostgreSQL tables (`title` and `content`)
    - Submits Spark jobs (spark/app/load.py) to write CSVs to PostgreSQL
    - Uses JDBC with PostgreSQL driver from `spark/jars/postgresql-42.7.13.jar`
-     (not tracked in git; place the jar there manually before running the Load stage)
+     (git-ignored; run `make fetch-jars` to download it with checksum verification)
 
 ### Spark Jobs
 
