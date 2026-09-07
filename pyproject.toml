@@ -22,7 +22,7 @@ dependencies = [
 # Airflow itself is not listed here on purpose - install it separately with the
 # official constraints file so its large dependency tree stays out of uv.lock.
 dags = [
-    "requests>=2.32.4",
+    "requests>=2.33.0",   # CVE-2024-47081 + PYSEC-2026-2275
     "beautifulsoup4>=4.12.3",
     "lxml>=6.1.0",
 ]

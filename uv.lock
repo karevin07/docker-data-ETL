@@ -168,7 +168,7 @@ requires-dist = [
     { name = "pygments", marker = "extra == 'dev'", specifier = ">=2.20.0" },
     { name = "pyspark", specifier = "==3.5.3" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=9.0.3" },
-    { name = "requests", marker = "extra == 'dags'", specifier = ">=2.32.4" },
+    { name = "requests", marker = "extra == 'dags'", specifier = ">=2.33.0" },
 ]
 provides-extras = ["dags", "dev"]
 
