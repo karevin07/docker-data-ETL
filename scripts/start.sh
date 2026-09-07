@@ -22,6 +22,20 @@ echo ""
 echo "Step 1: Starting Docker services..."
 echo "=========================================="
 cd "$PROJECT_DIR"
+
+# Prepare the Airflow bind-mount directories. The Airflow container runs as
+# uid 50000 (gid 0); if Docker auto-creates these mount sources they land as
+# root:root and Airflow cannot write its logs (container crash-loops).
+AIRFLOW_UID="${AIRFLOW_UID:-50000}"
+mkdir -p "$PROJECT_DIR/dags" "$PROJECT_DIR/logs" "$PROJECT_DIR/plugins"
+for d in "$PROJECT_DIR/logs" "$PROJECT_DIR/plugins"; do
+    if [ "$(stat -c '%u' "$d" 2>/dev/null)" != "$AIRFLOW_UID" ]; then
+        chown -R "${AIRFLOW_UID}:0" "$d" 2>/dev/null \
+            || sudo chown -R "${AIRFLOW_UID}:0" "$d" 2>/dev/null \
+            || echo "  ⚠️  could not chown $d to ${AIRFLOW_UID}:0 - run: sudo chown -R ${AIRFLOW_UID}:0 $d"
+    fi
+done
+
 docker-compose up -d
 
 # Step 2: Wait for services to be healthy

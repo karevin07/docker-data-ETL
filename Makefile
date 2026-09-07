@@ -77,16 +77,28 @@ rebuild-spark-images: ## force-rebuild Spark master + workers only
 # Start Services
 # =============================================================================
 
-.PHONY: start up setup-connections fetch-jars
+.PHONY: start up setup-connections fetch-jars prepare-dirs
+
+AIRFLOW_UID ?= 50000
 
 fetch-jars: ## download third-party Spark JARs (PostgreSQL JDBC) into spark/jars/
 	@bash scripts/fetch-jars.sh
+
+prepare-dirs: ## create + chown the Airflow bind-mount dirs (logs/plugins -> uid 50000)
+	@mkdir -p dags logs plugins
+	@for d in logs plugins; do \
+		if [ "$$(stat -c '%u' $$d 2>/dev/null)" != "$(AIRFLOW_UID)" ]; then \
+			chown -R $(AIRFLOW_UID):0 $$d 2>/dev/null \
+				|| sudo chown -R $(AIRFLOW_UID):0 $$d 2>/dev/null \
+				|| echo "  ⚠️  run: sudo chown -R $(AIRFLOW_UID):0 $$d"; \
+		fi; \
+	done
 
 start: fetch-jars ## start all services with automatic connection setup (recommended)
 	@echo "Starting all services with connection setup..."
 	@bash scripts/start.sh
 
-up: fetch-jars ## start all services without connection setup
+up: fetch-jars prepare-dirs ## start all services without connection setup
 	@echo "Starting all services..."
 	@docker-compose up -d
 
