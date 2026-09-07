@@ -101,7 +101,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         openjdk-17-jre-headless \
         # Utilities
         rsync \
-        netcat-openbsd
+        netcat-openbsd && \
+    # Point the arch-independent JAVA_HOME at the actual JDK dir (…-amd64 / …-arm64)
+    ln -sfn "$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" /usr/lib/jvm/java-17-openjdk
 
 # Copy Spark from data-etl-spark-base (no re-download needed!)
 # This avoids downloading Spark again (~400MB saved).
@@ -120,7 +122,7 @@ ENV AIRFLOW_HOME=${AIRFLOW_USER_HOME} \
     SPARK_HOME=/usr/local/spark \
     PATH="/usr/local/spark/bin:${PATH}" \
     PYTHONPATH="${AIRFLOW_USER_HOME}/dags" \
-    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
     DEBIAN_FRONTEND=noninteractive \
     TERM=linux \
     LANGUAGE=en_US.UTF-8 \

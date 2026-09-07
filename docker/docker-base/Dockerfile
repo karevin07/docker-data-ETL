@@ -90,13 +90,15 @@ ARG APP_USER=etluser
 ARG APP_UID=1000
 ARG APP_GID=1000
 
-# Environment variables
+# Environment variables.
+# JAVA_HOME is arch-independent; the real (…-amd64 / …-arm64) dir is symlinked to
+# it in the apt step below.
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=en_US.UTF-8 \
     LC_ALL=en_US.UTF-8 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 
 # Install runtime dependencies only
 # Using BuildKit cache mount to speed up repeated builds
@@ -115,7 +117,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libsnappy1v5 \
         # Locale
         locales && \
-    locale-gen en_US.UTF-8
+    locale-gen en_US.UTF-8 && \
+    # Point the arch-independent JAVA_HOME at the actual JDK dir (…-amd64 / …-arm64)
+    ln -sfn "$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" "${JAVA_HOME}"
 
 # Copy virtual environment (uv not needed in runtime, only the venv)
 COPY --from=builder /app/.venv /app/.venv

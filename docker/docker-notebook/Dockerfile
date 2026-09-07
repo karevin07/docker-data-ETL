@@ -91,11 +91,13 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     apt-get install -y --no-install-recommends \
         openjdk-17-jre-headless \
         tree \
-        git
+        git && \
+    # Point the arch-independent JAVA_HOME at the actual JDK dir (…-amd64 / …-arm64)
+    ln -sfn "$(dirname "$(dirname "$(readlink -f "$(command -v java)")")")" /usr/lib/jvm/java-17-openjdk
 
 # Set Java environment
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 \
-    PATH="${PATH}:/usr/lib/jvm/java-17-openjdk-amd64/bin"
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk \
+    PATH="${PATH}:/usr/lib/jvm/java-17-openjdk/bin"
 
 # Copy additional packages from builder
 COPY --from=jupyter_builder --chown=${NB_UID}:${NB_GID} \
