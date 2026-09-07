@@ -27,10 +27,12 @@ dags = [
     "lxml>=6.1.0",
 ]
 dev = [
-    "pytest>=8.3.0,<9.0.0",
+    "pytest>=9.0.3",       # PYSEC-2026-1845
     "black>=26.3.1",
     "flake8>=7.1.0,<8.0.0",
     "mypy>=1.13.0,<2.0.0",
+    "click>=8.3.3",        # transitive (black); PYSEC-2026-2132
+    "pygments>=2.20.0",    # transitive (pytest); PYSEC-2026-2987
 ]
 
 [build-system]
