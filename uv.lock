@@ -133,7 +133,7 @@ wheels = [
 [[package]]
 name = "docker-data-etl"
 version = "0.2.0"
-source = { editable = "." }
+source = { virtual = "." }
 dependencies = [
     { name = "jieba" },
     { name = "pandas" },
