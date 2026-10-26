@@ -27,7 +27,7 @@ FROM apache/airflow:2.10.4-python3.12 AS airflow_builder
 # Build arguments
 ARG SPARK_VERSION=4.1.3
 ARG AIRFLOW_VERSION=2.10.4
-ARG PYSPARK_VERSION=3.5.3
+ARG PYSPARK_VERSION=3.5.8
 ARG UV_VERSION=0.12.10
 
 # Switch to root for installation

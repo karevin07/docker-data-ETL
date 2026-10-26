@@ -25,7 +25,7 @@ variable "TAG" { default = "latest" }
 
 variable "SPARK_VERSION" { default = "4.1.3" }
 variable "HADOOP_VERSION" { default = "3" }
-variable "PYSPARK_VERSION" { default = "3.5.3" }
+variable "PYSPARK_VERSION" { default = "3.5.8" }
 variable "AIRFLOW_VERSION" { default = "2.10.4" }
 variable "UV_VERSION" { default = "0.12.10" }
 
